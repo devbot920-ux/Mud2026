@@ -55,3 +55,22 @@ These meanings come from the existing research scripts and must be revalidated d
 `C:\temp\DoorTelnet\graph.json` is noncanonical derived output. It contains room nodes, directional edges, display coordinates, region membership/names, descriptions, selected room flags, and spawn references.
 
 The X/Y layout and at least some region assignments were produced by scripts. They must be represented as derived values, not source-authored coordinates.
+
+## Derived topology audit baseline
+
+These values are confirmed only with respect to the current derived `graph.json` whose SHA-256 is `C499A15CDDB7548D96914EE1E9571A876E9C388358A30F14FA52617F26202B24`. They are not yet confirmed source semantics.
+
+| Finding | Value | Confidence |
+|---|---:|---|
+| Unique rooms | 3,446 | Confirmed for derived graph |
+| Directed edges | 7,077 | Confirmed for derived graph |
+| Weak components | 50 | Confirmed for derived graph |
+| Strong components | 79 | Confirmed for derived graph |
+| Rooms reachable from seed room 1 | 2,918 | Confirmed for derived graph |
+| Edges lacking inverse-direction counterpart | 169 | Confirmed for derived graph |
+| Reverse pairs disagreeing on door/hidden state | 17 | Confirmed for derived graph |
+| Vertical edges | 104 | Confirmed for derived graph |
+| Cross-region edges | 47 | Confirmed for derived graph |
+| Same-region coordinate collisions | 184 | Confirmed for derived layout |
+
+The 169 asymmetric edges are structurally classified as 69 reverse endpoints with non-opposite directions, 65 plain one-way links, 14 door links, 14 vertical links, 4 cross-region links, 2 portal/transport-endpoint links, and 1 hidden link. These classifications describe structure only; intent remains unknown.

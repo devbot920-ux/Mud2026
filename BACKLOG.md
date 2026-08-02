@@ -25,11 +25,12 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 ## Phase 2 — World topology audit
 
-- [ ] Classify 169 edges without reverse counterparts
-- [ ] Audit connected components and unreachable rooms
-- [ ] Audit door pairs, hidden exits, vertical links, portals, and transports
-- [ ] Separate inferred region/layout data from original facts
-- [ ] Select a varied golden fixture region
+- [x] Structurally classify 169 edges without reverse counterparts
+- [x] Audit connected components and unreachable rooms
+- [x] Audit door pairs, hidden exits, vertical links, portals, and transports
+- [x] Separate inferred region/layout data from original facts
+- [x] Select Pendelhaven (`R02`) as the leading golden-fixture region
+- [ ] Reconcile every provisional topology finding against the Phase 1 canonical import
 
 ## Research queue
 

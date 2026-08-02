@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phase 0 — project foundation and provenance — is complete on the `dev` branch. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff and [BACKLOG.md](BACKLOG.md) for the ordered work queue.
+Phase 0 is complete, and Phase 2 has produced a provisional audit of the existing derived room graph. Phase 1 canonical import and reconciliation remain pending. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/TOPOLOGY_AUDIT.md](docs/TOPOLOGY_AUDIT.md) for the audit summary, and [BACKLOG.md](BACKLOG.md) for the ordered work queue.
 
 ## Safety and data ownership
 
@@ -25,6 +25,12 @@ Original databases, DAT files, decompiled binaries, generated private manifests,
 
    ```powershell
    python -m unittest discover -s tests -v
+   ```
+
+4. Run the provisional topology audit:
+
+   ```powershell
+   python scripts/audit_topology.py
    ```
 
 The inventory is written to `var/manifests/source-manifest.json`, which Git ignores because it contains local paths and fingerprints of private inputs.

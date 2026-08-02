@@ -41,3 +41,17 @@ GitHub Issues will track complete actionable work once populated. `PROJECT_STATU
 - Status: Accepted
 
 The source inventory and its tests require no third-party packages, minimizing setup and making provenance capture reproducible on a normal Python installation.
+
+## D-007 — Treat the Phase 2 graph audit as a provisional baseline
+
+- Date: 2026-08-02
+- Status: Accepted
+
+Phase 2 may analyze the existing `graph.json` before Phase 1 is complete, but its topology, flags, regions, and coordinates remain derived evidence. Structural categories do not assert whether asymmetric connections are intentional. Phase 1 must regenerate and reconcile the topology before these findings can be promoted to source-backed facts.
+
+## D-008 — Use Pendelhaven as the leading golden-fixture candidate
+
+- Date: 2026-08-02
+- Status: Accepted provisionally
+
+Pendelhaven (`R02`) ranks first because its 60 rooms exercise doors, hidden and vertical connections, transports, stores, a tavern, a quest, spawns, and cross-region links while remaining much smaller than Imperial City. The final room subset will be selected after Phase 1 establishes canonical data.
