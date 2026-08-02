@@ -43,11 +43,18 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 ## Phase 4 — Golden fixture and export contract
 
-- [ ] Select the exact Pendelhaven room boundary and required cross-region stubs
-- [ ] Define a versioned engine-neutral JSON export schema
-- [ ] Export fixture rooms, multiedges, doors, NPCs, items, spawns, and decoded modifiers
-- [ ] Add referential-integrity and deterministic-output tests
-- [ ] Produce a minimal data viewer before choosing the 3D engine
+- [x] Select the exact Pendelhaven room boundary and required cross-region stubs
+- [x] Define a versioned engine-neutral JSON export schema
+- [x] Export fixture rooms, multiedges, doors, NPCs, items, spawns, and decoded modifiers
+- [x] Add referential-integrity and deterministic-output tests
+- [x] Produce a minimal engine-neutral data viewer before choosing the 3D engine
+
+## Phase 5 — Engine evaluation spike
+
+- [ ] Define renderer evaluation criteria against the Pendelhaven fixture
+- [ ] Prototype fixture loading in the leading engine candidates without changing the export contract
+- [ ] Compare navigation, asset pipeline, AI-assisted iteration, deployment, and maintenance cost
+- [ ] Select the first playable-client engine and record the decision
 
 ## Research queue
 

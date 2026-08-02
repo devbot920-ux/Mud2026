@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mud2026 fixture viewer</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background:#111820; color:#e6edf3; }
+    body { margin:0; } header { padding:1rem 1.25rem; border-bottom:1px solid #34404b; }
+    h1,h2 { margin:.2rem 0; font-weight:500; } .meta { color:#aab7c4; }
+    main { display:grid; grid-template-columns:minmax(15rem,22rem) 1fr; min-height:calc(100vh - 5rem); }
+    aside { border-right:1px solid #34404b; padding:1rem; } section { padding:1rem 1.25rem; }
+    input { box-sizing:border-box; width:100%; padding:.65rem; color:inherit; background:#1b2631; border:1px solid #526170; border-radius:.35rem; }
+    ul { list-style:none; padding:0; } button { width:100%; text-align:left; color:inherit; background:transparent; border:0; padding:.55rem; border-radius:.3rem; cursor:pointer; }
+    button:hover,button[aria-current=true] { background:#243444; } table { border-collapse:collapse; width:100%; margin:1rem 0; }
+    th,td { text-align:left; padding:.45rem; border-bottom:1px solid #34404b; vertical-align:top; }
+    code { color:#9cdcfe; } .badge { display:inline-block; padding:.15rem .45rem; background:#243444; border-radius:1rem; margin-right:.3rem; }
+    @media (max-width:700px) { main { grid-template-columns:1fr; } aside { border-right:0; border-bottom:1px solid #34404b; } }
+  </style>
+</head>
+<body>
+  <header><h1>Mud2026 golden fixture</h1><div id="summary" class="meta">Loading private export…</div></header>
+  <main>
+    <aside><label for="search">Find room</label><input id="search" type="search" placeholder="ID or description"><ul id="rooms"></ul></aside>
+    <section id="detail"><h2>Select a room</h2><p class="meta">Rooms and links are read from the generated engine-neutral export.</p></section>
+  </main>
+  <script>
+    const state={data:null,selected:null};
+    const el=(name,text)=>{const node=document.createElement(name); if(text!==undefined) node.textContent=String(text); return node};
+    const field=(entity,name)=>entity.fields.find(item=>item.name===name)?.value;
+    function renderList(){
+      const query=document.getElementById('search').value.toLowerCase(); const list=document.getElementById('rooms'); list.replaceChildren();
+      state.data.rooms.filter(room=>`${room.id} ${field(room,'short_description')||''}`.toLowerCase().includes(query)).forEach(room=>{
+        const li=el('li'),button=el('button',`${room.id} — ${field(room,'short_description')||room.scope}`);
+        button.type='button'; button.setAttribute('aria-current',String(room.id===state.selected)); button.onclick=()=>{state.selected=room.id;renderList();renderDetail(room)};
+        li.append(button); list.append(li);
+      });
+    }
+    function addTable(parent,headers,rows){const table=el('table'),head=el('tr'); headers.forEach(x=>head.append(el('th',x))); table.append(head); rows.forEach(values=>{const row=el('tr');values.forEach(x=>row.append(el('td',x)));table.append(row)});parent.append(table)}
+    function renderDetail(room){
+      const panel=document.getElementById('detail'); panel.replaceChildren(); panel.append(el('h2',field(room,'short_description')||`Room ${room.id}`));
+      const info=el('p'); info.append(el('span',room.scope)); info.firstChild.className='badge'; info.append(document.createTextNode(` room ${room.id} · ${room.display.region_name||room.display.region||'unassigned region'} · (${room.display.x}, ${room.display.y})`)); panel.append(info);
+      const long=field(room,'long_description'); if(long) panel.append(el('p',long));
+      const exits=state.data.edges.filter(edge=>edge.from_room===room.id||edge.to_room===room.id);
+      panel.append(el('h2','Incident links')); addTable(panel,['Direction','From','To','Flags'],exits.map(edge=>[edge.direction,edge.from_room,edge.to_room,[edge.door?'door':'',edge.hidden?'hidden':''].filter(Boolean).join(', ')||'plain']));
+      const spawn=state.data.spawns.find(item=>item.id===room.id); if(spawn){panel.append(el('h2','Spawns'));addTable(panel,['Type','ID','Count'],spawn.entries.map(entry=>[entry.entity_type,entry.entity_id,entry.count]))}
+      const mods=state.data.modifiers.filter(item=>item.owner_key===room.id); if(mods.length){panel.append(el('h2','Modifiers'));addTable(panel,['Tag','Meaning','Confidence'],mods.map(item=>[item.tag,item.name||'unresolved',item.confidence]))}
+    }
+    document.getElementById('search').addEventListener('input',renderList);
+    fetch('/var/exports/pendelhaven-v1.json').then(response=>{if(!response.ok)throw new Error(response.statusText);return response.json()}).then(data=>{
+      state.data=data; document.getElementById('summary').textContent=`${data.fixture.name}: ${data.fixture.primary_room_ids.length} rooms, ${data.fixture.stub_room_ids.length} stubs, ${data.edges.length} directed links`; renderList();
+    }).catch(error=>{document.getElementById('summary').textContent=`Export unavailable: ${error.message}. Run the exporter first.`});
+  </script>
+</body>
+</html>

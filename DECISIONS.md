@@ -83,3 +83,17 @@ Connectivity, reachability, and asymmetry decisions will use all 7,097 Phase 1 t
 - Status: Accepted
 
 Calls to `_ACQUIRE_MODIFICATION(object, tag)` provide strong evidence that a numeric MOD1 tag participates in the surrounding gameplay function. A specific consumer can support a tag-family name, but decompiled names and control flow do not by themselves establish every field's meaning. Phase 3 therefore records function and line provenance, preserves byte variability, and leaves fields or tags unresolved unless corroborated.
+
+## D-013 — Bound the golden fixture by derived Pendelhaven membership plus one-hop stubs
+
+- Date: 2026-08-02
+- Status: Accepted
+
+The fixture includes all 60 rooms assigned to derived region `R02` and every canonical topology edge touching one of them. External endpoints `416`, `958`, and `4061` are skeletal non-expanding stubs. This preserves inbound, outbound, hidden, and vertical boundary behavior without recursively importing neighboring regions. Region membership remains labeled as derived evidence.
+
+## D-014 — Version the engine-neutral export and keep generated content private
+
+- Date: 2026-08-02
+- Status: Accepted
+
+The first contract is `mud2026.engine-neutral-world` version `1.0.0`, described by a tracked JSON Schema. Generated exports remain under ignored `var/exports/` pending an explicit licensing/content decision. Complete raw bytes are retained only for associated non-base modifiers so unresolved records survive the handoff; tracked files contain tools, schema, tests, and aggregate findings only.

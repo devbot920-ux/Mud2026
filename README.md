@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phases 0–3 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, and Phase 3 catalogs all 113 MOD1 tags with evidence while preserving 72 unresolved meanings. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/BASELINE_IMPORT.md](docs/BASELINE_IMPORT.md) for Phase 1, [docs/CANONICAL_TOPOLOGY_AUDIT.md](docs/CANONICAL_TOPOLOGY_AUDIT.md) for Phase 2, [docs/MOD1_TAG_CATALOG.md](docs/MOD1_TAG_CATALOG.md) for Phase 3, and [BACKLOG.md](BACKLOG.md) for the ordered queue.
+Phases 0–4 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, Phase 3 catalogs all 113 MOD1 tags, and Phase 4 exports a closed Pendelhaven fixture through a versioned engine-neutral contract. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff and [docs/GOLDEN_FIXTURE_EXPORT.md](docs/GOLDEN_FIXTURE_EXPORT.md) for Phase 4.
 
 ## Safety and data ownership
 
@@ -51,6 +51,13 @@ Original databases, DAT files, decompiled binaries, generated private manifests,
    python scripts/analyze_mod1_tags.py
    ```
 
+8. Export and inspect the private Pendelhaven fixture:
+
+   ```powershell
+   python scripts/export_golden_fixture.py
+   python scripts/serve_fixture_viewer.py
+   ```
+
 The inventory is written to `var/manifests/source-manifest.json`, which Git ignores because it contains local paths and fingerprints of private inputs.
 
 ## Repository map
@@ -64,3 +71,4 @@ The inventory is written to `var/manifests/source-manifest.json`, which Git igno
 - `docs/` — conventions and research documentation
 - `scripts/` — reproducible read-only tooling
 - `tests/` — automated validation
+- `viewer/` — engine-neutral private-export inspector

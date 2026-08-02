@@ -135,3 +135,20 @@ The canonical Phase 2 audit uses all 7,097 source-decoded edges. It uses `graph.
 Canonical asymmetric edges are structurally grouped as 106 reverse endpoints with non-opposite directions, 60 plain one-way links, 14 vertical links, 4 cross-region links, 2 door links, 2 portal/transport-endpoint links, and 1 hidden link. Intent remains unknown.
 
 Recovered links between rooms 3045 and 3046 connect the formerly separate 322-room component to the main world. Other recovered door directions account for most of the improved directed reachability and strong connectivity.
+
+## Phase 4 engine-neutral fixture
+
+The ignored `var/exports/pendelhaven-v1.json` implements contract `mud2026.engine-neutral-world` version `1.0.0`.
+
+| Export concept | Records | Interpretation |
+|---|---:|---|
+| Primary rooms | 60 | Complete canonical rooms selected by derived `R02` membership |
+| Room stubs | 3 | Minimal external endpoints `416`, `958`, `4061` |
+| Directed edges | 130 | 125 internal plus 5 boundary; canonical multiedges |
+| Door sides | 2 | Separate `4057` and `4058` source records; both decode direction `W` |
+| Spawns / entries | 19 / 32 | All selected-room spawn records and decoded entries |
+| Referenced NPCs | 18 | Complete typed spawn closure |
+| Referenced items | 12 | Complete typed spawn closure |
+| Associated modifiers | 70 | Every non-base same-key MOD1 row for primary rooms and referenced entities |
+
+Of the 70 modifiers, 21 use a current interpreted/hypothesized tag and 49 retain unknown meaning. All retain complete private raw bytes and provenance. Decoded fields retain per-field confidence; tag-level Phase 3 hypotheses are not promoted to confirmed fields.

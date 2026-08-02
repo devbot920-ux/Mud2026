@@ -2,13 +2,13 @@
 
 Updated: 2026-08-02
 Branch: `dev`
-Milestone: Phase 3 — MOD1 tag evidence catalog complete
+Milestone: Phase 4 — Pendelhaven fixture and export contract complete
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
-Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 113 MOD1 tags using entity-key association, co-occurrence, byte variability, and decompiled DLL call sites while leaving 72 tags explicitly unresolved.
+Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 113 MOD1 tags. Phase 4 defines an engine-neutral versioned JSON contract and closes the 60-room Pendelhaven fixture over topology, spawns, referenced entities, and modifiers.
 
 Known source evidence:
 
@@ -68,6 +68,18 @@ Initial read-only analysis found:
 - Tentative hypotheses for door strength/key rules and disease/poison effect slots
 - Tracked concise report at `docs/MOD1_TAG_CATALOG.md`; detailed report remains under ignored `var/`
 
+## Phase 4 deliverables
+
+- Exact `R02` boundary: 60 primary rooms plus skeletal stubs `416`, `958`, and `4061`
+- All 125 internal and 5 crossing canonical directed multiedges
+- Versioned `mud2026.engine-neutral-world` `1.0.0` JSON Schema
+- Deterministic read-only exporter at `scripts/export_golden_fixture.py`
+- Complete closure over 2 door sides, 19 spawns, 32 spawn entries, 18 NPCs, 12 items, and 70 non-base modifiers
+- Field, edge, entity, and modifier source-row provenance, confidence, and offsets
+- Complete private raw bytes for 49 unresolved and 21 interpreted/hypothesized modifiers
+- Minimal engine-neutral browser viewer at `viewer/index.html`
+- Tracked report at `docs/GOLDEN_FIXTURE_EXPORT.md`; generated source content remains under ignored `var/exports/`
+
 ## Evidence and verification
 
 The inventory script opens files only for binary reading and writes only its configured manifest below the repository. Inputs are expanded deterministically and duplicate resolved files are rejected from duplicate output.
@@ -117,13 +129,24 @@ Phase 3 verification completed on 2026-08-02:
 - All source databases and the decompiled DLL were opened read-only
 - Detailed evidence report includes no source description text
 
+Phase 4 verification completed on 2026-08-02:
+
+- `python -m unittest discover -s tests -v` — 36 tests passed
+- `python scripts/export_golden_fixture.py` — 60 primary rooms, 3 stubs, 130 edges, 2 doors, 19 spawns, 18 NPCs, 12 items, 70 modifiers
+- Repeated export SHA-256 — `A4BF7E336F70E55DAE3157A50521BC98E28861EEEA1078B576F956939A6F34D9`
+- Referential integrity — zero dangling room-edge, NPC-spawn, or item-spawn references
+- All source databases and the canonical baseline remained read-only
+- `git diff --check` — passed before commit
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
 - What are the semantic roles of INS1, ACT1, NAM1, RAND, SPEL, and HEL1 records?
 - Which structurally asymmetric connections are intentional rather than extraction artifacts?
 - Region assignments remain derived and are not yet present in the canonical source-backed model.
+- The fixture's 49 unresolved modifiers still lack semantic meanings and field layouts.
+- The generated export remains private pending a licensing/content decision.
 
 ## Exact next task
 
-Begin Phase 4 by selecting the exact Pendelhaven golden-fixture boundary and defining a versioned, engine-neutral export contract. Continue decoding ranked MOD1 unknowns when the fixture requires them.
+Begin Phase 5 by defining evaluation criteria and loading the unchanged Pendelhaven `1.0.0` export into leading 3D engine candidates. Continue decoding ranked MOD1 unknowns when playable fixture behavior requires them.

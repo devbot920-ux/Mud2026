@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mud2026:schema:engine-neutral-world:1.0.0",
+  "title": "Mud2026 engine-neutral world export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "fixture", "sources", "rooms", "edges", "doors", "npcs", "items", "spawns", "modifiers"],
+  "properties": {
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "mud2026.engine-neutral-world"},
+        "version": {"const": "1.0.0"}
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "required": ["id", "name", "primary_region", "primary_room_ids", "stub_room_ids", "boundary_rule"],
+      "properties": {
+        "id": {"type": "string"}, "name": {"type": "string"},
+        "primary_region": {"type": "string"},
+        "primary_room_ids": {"type": "array", "items": {"type": "integer"}, "uniqueItems": true},
+        "stub_room_ids": {"type": "array", "items": {"type": "integer"}, "uniqueItems": true},
+        "boundary_rule": {"type": "string"}
+      }
+    },
+    "sources": {"type": "object"},
+    "rooms": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}},
+    "doors": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "npcs": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "spawns": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "modifiers": {"type": "array", "items": {"$ref": "#/$defs/modifier"}}
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "required": ["source", "table", "source_row_id", "record_sha256"],
+      "properties": {
+        "source": {"type": "string"}, "table": {"type": "string"},
+        "source_row_id": {"type": "integer"}, "record_sha256": {"type": "string"},
+        "identity": {"type": "object"}, "byte_offset": {"type": ["integer", "null"]},
+        "byte_width": {"type": ["integer", "null"]}, "rule": {"type": "string"}
+      }
+    },
+    "field": {
+      "type": "object", "required": ["name", "value", "confidence", "provenance"],
+      "properties": {"name": {"type": "string"}, "value": {}, "confidence": {"enum": ["confirmed", "strong", "tentative", "unknown"]}, "provenance": {"$ref": "#/$defs/provenance"}}
+    },
+    "entity": {
+      "type": "object", "required": ["id", "stable_id", "scope", "fields", "provenance"],
+      "properties": {"id": {"type": "integer"}, "stable_id": {"type": "string"}, "scope": {"enum": ["primary", "stub", "referenced"]}, "fields": {"type": "array", "items": {"$ref": "#/$defs/field"}}, "display": {"type": "object"}, "entries": {"type": "array"}, "provenance": {"$ref": "#/$defs/provenance"}}
+    },
+    "edge": {
+      "type": "object", "required": ["id", "from_room", "to_room", "direction", "door", "hidden", "provenance"],
+      "properties": {"id": {"type": "integer"}, "from_room": {"type": "integer"}, "to_room": {"type": "integer"}, "direction": {"type": "string"}, "door": {"type": "boolean"}, "hidden": {"type": "boolean"}, "provenance": {"$ref": "#/$defs/provenance"}}
+    },
+    "modifier": {
+      "type": "object", "required": ["source_row_id", "owner_key", "tag", "name", "confidence", "raw_data_base64", "provenance"],
+      "properties": {"source_row_id": {"type": "integer"}, "owner_key": {"type": ["integer", "null"]}, "tag": {"type": "string"}, "name": {"type": ["string", "null"]}, "confidence": {"enum": ["confirmed", "strong", "tentative", "unknown"]}, "raw_data_base64": {"type": "string"}, "provenance": {"$ref": "#/$defs/provenance"}}
+    }
+  }
+}
