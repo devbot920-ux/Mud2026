@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phase 0 is complete, and Phase 2 has produced a provisional audit of the existing derived room graph. Phase 1 canonical import and reconciliation remain pending. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/TOPOLOGY_AUDIT.md](docs/TOPOLOGY_AUDIT.md) for the audit summary, and [BACKLOG.md](BACKLOG.md) for the ordered work queue.
+Phases 0 and 1 are complete. Phase 1 provides a reproducible raw-provenance baseline and recovers all published topology plus 20 edges omitted by the legacy graph builder. Phase 2's original derived-graph audit is complete, with a canonical-edge re-audit pending. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/BASELINE_IMPORT.md](docs/BASELINE_IMPORT.md) for Phase 1, [docs/TOPOLOGY_AUDIT.md](docs/TOPOLOGY_AUDIT.md) for Phase 2, and [BACKLOG.md](BACKLOG.md) for the ordered work queue.
 
 ## Safety and data ownership
 
@@ -31,6 +31,12 @@ Original databases, DAT files, decompiled binaries, generated private manifests,
 
    ```powershell
    python scripts/audit_topology.py
+   ```
+
+5. Build the ignored canonical baseline and reconciliation report:
+
+   ```powershell
+   python scripts/baseline_import.py
    ```
 
 The inventory is written to `var/manifests/source-manifest.json`, which Git ignores because it contains local paths and fingerprints of private inputs.

@@ -55,3 +55,17 @@ Phase 2 may analyze the existing `graph.json` before Phase 1 is complete, but it
 - Status: Accepted provisionally
 
 Pendelhaven (`R02`) ranks first because its 60 rooms exercise doors, hidden and vertical connections, transports, stores, a tavern, a quest, spawns, and cross-region links while remaining much smaller than Imperial City. The final room subset will be selected after Phase 1 establishes canonical data.
+
+## D-009 — Preserve raw SQLite content cell by cell
+
+- Date: 2026-08-02
+- Status: Accepted
+
+The canonical baseline stores every source schema object, row, and value with its original SQLite storage class. BLOBs remain complete, and source files, rows, and values receive SHA-256 fingerprints. Decoded entities and fields are additive views with source-row, byte-offset, rule, and confidence evidence; they never replace raw records.
+
+## D-010 — Prefer source-decoded multiedges over the legacy graph
+
+- Date: 2026-08-02
+- Status: Accepted
+
+The legacy graph contains 7,077 edges and is lossy. Phase 1 recovers all of them plus 20 additional edges: 19 were suppressed by one-target-per-direction behavior, and one was suppressed when NetworkX `DiGraph` collapsed two directions sharing the same endpoints. The canonical topology retains all 7,097 source-decoded edges; future audits and renderers must support multiedges.

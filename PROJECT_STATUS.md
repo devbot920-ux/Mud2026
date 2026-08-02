@@ -2,13 +2,13 @@
 
 Updated: 2026-08-02
 Branch: `dev`
-Milestone: Phase 2 — provisional topology audit complete; Phase 1 remains pending
+Milestone: Phase 1 — reproducible baseline import complete; canonical topology re-audit pending
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
-Phase 2 has audited the existing derived graph without treating it as canonical. The audit is reproducible and identifies structural findings, but gameplay intent cannot be confirmed until Phase 1 regenerates and reconciles the graph from raw records.
+Phase 1 now imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. It also ports the legacy-understood DES1/MOD1 decoding with field-level evidence and reconciles the source-decoded topology against the derived graph. Phase 2 previously audited the derived graph; its metrics must now be recomputed against the 20 additional source-backed edges retained by Phase 1.
 
 Known source evidence:
 
@@ -43,6 +43,16 @@ Initial read-only analysis found:
 - Explicit structural classification of all 169 missing reverse counterparts
 - Auditable golden-fixture ranking selecting Pendelhaven (`R02`) as the leading candidate
 
+## Phase 1 deliverables
+
+- Canonical raw-provenance schema at `schema/baseline.sql`
+- Read-only, atomic, deterministic importer at `scripts/baseline_import.py`
+- Complete preservation of SQLite schema objects, rows, storage classes, values, BLOBs, and hashes
+- Catalog of all 113 MOD1 tag values without discarding unknown records
+- Provisional DES1 plus known MOD1 room, door, item, NPC, spawn, trainer, promotion, spell-count, quest, and feature decoding with offsets/confidence
+- Semantic topology reconciliation reproducing all 3,446 published rooms and all 7,077 published edges
+- Preservation and explanation of 20 additional source-decoded edges omitted by the lossy graph builder
+
 ## Evidence and verification
 
 The inventory script opens files only for binary reading and writes only its configured manifest below the repository. Inputs are expanded deterministically and duplicate resolved files are rejected from duplicate output.
@@ -63,13 +73,25 @@ Phase 2 verification completed on 2026-08-02:
 - Repeated detailed-report SHA-256 — `A02878D775C4E9F06C558D1B005097DC76E7137ACCC35494F57AD486FDA154D7`
 - `git diff --check` — passed before commit
 
+Phase 1 verification completed on 2026-08-02:
+
+- `python -m unittest discover -s tests -q` — 23 tests passed
+- Imported 13 databases, 97 schema objects, 16,720 rows, and 58,531 values
+- Canonical baseline contains 9,069 decoded entities, 26,441 decoded fields, and 7,097 topology edges
+- `PRAGMA integrity_check` — `ok`; `PRAGMA foreign_key_check` — zero violations
+- Source-file hash comparison — zero mismatches
+- Repeated baseline SHA-256 — `4AD060F062E6C052366B5BABCB1C3A95D6B6223D9CDE630EEF234D0E3CD82C8A`
+- Semantic digest — `40D6E03DB1F44C70C848C5920D1D0BC9CC3FB7AEB0BC0839621565D21DA2A3EA`
+- Reconciliation — zero missing/extra nodes, zero missing published edges, 20 additional source-decoded edges
+
 ## Unresolved questions
 
 - Which MOD1 tags encode core NPC, item, combat, store, lock, and quest behavior?
 - What are the semantic roles of INS1, ACT1, NAM1, RAND, SPEL, and HEL1 records?
 - Which structurally asymmetric connections are intentional rather than extraction artifacts?
-- Does Phase 1 reproduce the same components, directions, door flags, hidden flags, and region assignments?
+- How do the 20 source-backed edges omitted by `graph.json` change Phase 2 component, reachability, and asymmetry metrics?
+- Region assignments remain derived and are not yet present in the canonical source-backed model.
 
 ## Exact next task
 
-Begin Phase 1 by implementing a raw, read-only SQLite record importer that preserves database metadata, keys, BLOBs, hashes, and provenance. Then reconcile its regenerated topology against this provisional Phase 2 baseline.
+Re-run the Phase 2 topology analysis against the canonical Phase 1 edge set, compare its metrics with the derived-graph audit, and document the effect of the 20 recovered edges. Then begin systematic decoding of the remaining MOD1 tags.

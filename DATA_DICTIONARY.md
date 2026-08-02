@@ -74,3 +74,26 @@ These values are confirmed only with respect to the current derived `graph.json`
 | Same-region coordinate collisions | 184 | Confirmed for derived layout |
 
 The 169 asymmetric edges are structurally classified as 69 reverse endpoints with non-opposite directions, 65 plain one-way links, 14 door links, 14 vertical links, 4 cross-region links, 2 portal/transport-endpoint links, and 1 hidden link. These classifications describe structure only; intent remains unknown.
+
+## Phase 1 canonical baseline
+
+Generated privately at `var/baseline/rose-baseline.sqlite` from the tracked `schema/baseline.sql` and `scripts/baseline_import.py`.
+
+| Entity | Records | Distinct stable IDs | Confidence |
+|---|---:|---:|---|
+| Source databases | 13 | 13 | Confirmed |
+| Source schema objects | 97 | 97 | Confirmed |
+| Source rows | 16,720 | — | Confirmed |
+| Source values | 58,531 | — | Confirmed |
+| DES1 descriptions | 4,398 | 4,397 | Strong ID / tentative text decoding |
+| Rooms | 3,446 | 3,446 | Strong ID / tentative fields |
+| Doors | 78 | 78 | Strong ID / tentative topology |
+| Item-base records | 549 | 529 | Strong ID / tentative categories |
+| NPCs | 211 | 211 | Strong ID / tentative descriptions |
+| Spawn records | 387 | 387 | Strong ID / tentative entries |
+| Source-decoded topology edges | 7,097 | 7,097 semantic tuples | Tentative decoding |
+| MOD1 tag values cataloged | 113 | 113 | Confirmed at assumed offset 8 |
+
+The baseline reproduces every published graph node and edge while retaining 20 additional source-decoded edges. Nineteen collide with another edge from the same room/direction in the legacy builder; one shares endpoints with another direction and was collapsed by a simple directed graph representation.
+
+Canonical raw tables are `source_file`, `schema_object`, `source_row`, and `source_value`. Additive interpretation tables are `decoded_entity`, `decoded_field`, `topology_edge`, and `mod1_tag_catalog`. `import_run` records the schema version and semantic digest.

@@ -14,14 +14,14 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 ## Phase 1 — Reproducible baseline import
 
-- [ ] Define the raw provenance SQLite schema
-- [ ] Import all SQLite metadata, keys, and BLOB records read-only
-- [ ] Preserve full raw BLOBs and calculate per-record SHA-256
-- [ ] Port DES1 decoding into tested modules
-- [ ] Port known MOD1 decoding into tested modules
-- [ ] Generate a machine-readable record-tag frequency catalog
-- [ ] Compare regenerated rooms and edges with the current graph
-- [ ] Explain every baseline count difference
+- [x] Define the raw provenance SQLite schema
+- [x] Import all SQLite metadata, keys, and BLOB records read-only
+- [x] Preserve full raw BLOBs and calculate per-record SHA-256
+- [x] Port DES1 decoding into tested modules
+- [x] Port known MOD1 decoding into tested modules
+- [x] Generate a machine-readable record-tag frequency catalog
+- [x] Compare regenerated rooms and edges with the current graph
+- [x] Explain every baseline count difference
 
 ## Phase 2 — World topology audit
 
@@ -30,7 +30,7 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Audit door pairs, hidden exits, vertical links, portals, and transports
 - [x] Separate inferred region/layout data from original facts
 - [x] Select Pendelhaven (`R02`) as the leading golden-fixture region
-- [ ] Reconcile every provisional topology finding against the Phase 1 canonical import
+- [ ] Recompute and reconcile Phase 2 metrics against all 7,097 canonical edges
 
 ## Research queue
 
