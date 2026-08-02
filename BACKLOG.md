@@ -34,16 +34,24 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 ## Phase 3 — Record-type reverse engineering
 
-- [ ] Generate a ranked unknown-tag research catalog with representative records
-- [ ] Correlate high-frequency MOD1 tags with entity keys and known modifiers
-- [ ] Trace DLL Btrieve access patterns to tag and byte-offset hypotheses
-- [ ] Decode and test gameplay-critical NPC and item properties first
-- [ ] Decode door/lock, store, quest, combat, and behavior records
-- [ ] Record evidence and confidence for every tag; preserve unresolved tags
+- [x] Generate a ranked unknown-tag research catalog with representative source-row IDs
+- [x] Correlate high-frequency MOD1 tags with entity keys and known modifiers
+- [x] Trace DLL modification lookups to tag hypotheses and field-research leads
+- [x] Decode and test initial gameplay-critical NPC and item tag families
+- [x] Decode initial door/lock, store, quest, combat, and behavior tag families
+- [x] Record evidence and confidence for every tag; preserve 72 unresolved tags
+
+## Phase 4 — Golden fixture and export contract
+
+- [ ] Select the exact Pendelhaven room boundary and required cross-region stubs
+- [ ] Define a versioned engine-neutral JSON export schema
+- [ ] Export fixture rooms, multiedges, doors, NPCs, items, spawns, and decoded modifiers
+- [ ] Add referential-integrity and deterministic-output tests
+- [ ] Produce a minimal data viewer before choosing the 3D engine
 
 ## Research queue
 
-- [ ] Decode high-frequency unknown MOD1 tags
-- [ ] Trace DLL Btrieve access and gameplay functions to record fields
+- [ ] Decode the ranked high-frequency unknown MOD1 tags
+- [ ] Trace DLL consumers from tag-level meanings to exact record fields
 - [ ] Decode INS1, SPEL, ACT1, NAM1, HEL1, and RAND
 - [ ] Determine why 549 item-base records map to 529 item keys

@@ -2,13 +2,13 @@
 
 Updated: 2026-08-02
 Branch: `dev`
-Milestone: Phase 2 — canonical topology audit complete
+Milestone: Phase 3 — MOD1 tag evidence catalog complete
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
-Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 now audits all 7,097 source-decoded edges while using the old graph only for derived regions, coordinates, and presentation flags. The canonical audit supersedes the earlier graph-only connectivity metrics.
+Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 113 MOD1 tags using entity-key association, co-occurrence, byte variability, and decompiled DLL call sites while leaving 72 tags explicitly unresolved.
 
 Known source evidence:
 
@@ -57,6 +57,17 @@ Initial read-only analysis found:
 - Semantic topology reconciliation reproducing all 3,446 published rooms and all 7,077 published edges
 - Preservation and explanation of 20 additional source-decoded edges omitted by the lossy graph builder
 
+## Phase 3 deliverables
+
+- Deterministic standard-library MOD1 evidence analyzer at `scripts/analyze_mod1_tags.py`
+- Complete 113-tag evidence ledger and ranked 72-tag unresolved queue
+- Same-key room, door, NPC, and item association plus tag co-occurrence analysis
+- Per-offset byte-variability profiles without publishing source descriptions
+- Decompiled `_ACQUIRE_MODIFICATION` correlation with function and line provenance
+- Strong tag-family hypotheses for NPC extra attacks, armor-defense eligibility, trap events, limited shop stock, and conditional combat modifiers
+- Tentative hypotheses for door strength/key rules and disease/poison effect slots
+- Tracked concise report at `docs/MOD1_TAG_CATALOG.md`; detailed report remains under ignored `var/`
+
 ## Evidence and verification
 
 The inventory script opens files only for binary reading and writes only its configured manifest below the repository. Inputs are expanded deterministically and duplicate resolved files are rejected from duplicate output.
@@ -98,13 +109,21 @@ Canonical Phase 2 verification completed on 2026-08-02:
 - Repeated canonical-audit SHA-256 — `A12DCDADDEE3ED057E7D5956F4A13CE9C5DD19E4D87BBA9A990C1BD094F27179`
 - Pendelhaven (`R02`) remains the leading golden-fixture candidate
 
+Phase 3 verification completed on 2026-08-02:
+
+- `python -m unittest discover -s tests -v` — 30 tests passed
+- `python scripts/analyze_mod1_tags.py` — 7,060 records, 113 tags, 41 interpreted/hypothesized, 72 unresolved
+- Repeated detailed-report SHA-256 — `B163C8C94FB6E867A82C6580D648FEB31416A880002AD9F73B664B4CA3CCB54B`
+- All source databases and the decompiled DLL were opened read-only
+- Detailed evidence report includes no source description text
+
 ## Unresolved questions
 
-- Which MOD1 tags encode core NPC, item, combat, store, lock, and quest behavior?
+- What are the exact byte-field layouts within the newly classified MOD1 tag families?
 - What are the semantic roles of INS1, ACT1, NAM1, RAND, SPEL, and HEL1 records?
 - Which structurally asymmetric connections are intentional rather than extraction artifacts?
 - Region assignments remain derived and are not yet present in the canonical source-backed model.
 
 ## Exact next task
 
-Begin Phase 3 by cataloging and systematically decoding the remaining MOD1 tags, prioritizing high-frequency NPC, item, combat, door/lock, store, and quest behavior.
+Begin Phase 4 by selecting the exact Pendelhaven golden-fixture boundary and defining a versioned, engine-neutral export contract. Continue decoding ranked MOD1 unknowns when the fixture requires them.

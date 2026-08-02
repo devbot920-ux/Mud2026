@@ -76,3 +76,10 @@ The legacy graph contains 7,077 edges and is lossy. Phase 1 recovers all of them
 - Status: Accepted
 
 Connectivity, reachability, and asymmetry decisions will use all 7,097 Phase 1 topology edges. The earlier 7,077-edge graph-only audit remains a useful record of legacy-export loss but is no longer authoritative for topology metrics. Derived regions, coordinates, and feature flags remain presentation evidence because they do not yet have a canonical source-backed equivalent.
+
+## D-012 — Treat DLL modification consumers as tag evidence, not a field specification
+
+- Date: 2026-08-02
+- Status: Accepted
+
+Calls to `_ACQUIRE_MODIFICATION(object, tag)` provide strong evidence that a numeric MOD1 tag participates in the surrounding gameplay function. A specific consumer can support a tag-family name, but decompiled names and control flow do not by themselves establish every field's meaning. Phase 3 therefore records function and line provenance, preserves byte variability, and leaves fields or tags unresolved unless corroborated.

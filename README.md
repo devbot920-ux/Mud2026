@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phases 0–2 are complete. Phase 1 provides a reproducible raw-provenance baseline and recovers all published topology plus 20 edges omitted by the legacy graph builder. Phase 2 audits all 7,097 canonical edges and compares them with the lossy legacy graph. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/BASELINE_IMPORT.md](docs/BASELINE_IMPORT.md) for Phase 1, [docs/CANONICAL_TOPOLOGY_AUDIT.md](docs/CANONICAL_TOPOLOGY_AUDIT.md) for canonical Phase 2 results, and [BACKLOG.md](BACKLOG.md) for the ordered work queue.
+Phases 0–3 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, and Phase 3 catalogs all 113 MOD1 tags with evidence while preserving 72 unresolved meanings. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff, [docs/BASELINE_IMPORT.md](docs/BASELINE_IMPORT.md) for Phase 1, [docs/CANONICAL_TOPOLOGY_AUDIT.md](docs/CANONICAL_TOPOLOGY_AUDIT.md) for Phase 2, [docs/MOD1_TAG_CATALOG.md](docs/MOD1_TAG_CATALOG.md) for Phase 3, and [BACKLOG.md](BACKLOG.md) for the ordered queue.
 
 ## Safety and data ownership
 
@@ -43,6 +43,12 @@ Original databases, DAT files, decompiled binaries, generated private manifests,
 
    ```powershell
    python scripts/audit_canonical_topology.py
+   ```
+
+7. Build the MOD1 evidence catalog:
+
+   ```powershell
+   python scripts/analyze_mod1_tags.py
    ```
 
 The inventory is written to `var/manifests/source-manifest.json`, which Git ignores because it contains local paths and fingerprints of private inputs.

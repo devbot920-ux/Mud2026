@@ -36,8 +36,8 @@ These meanings come from the existing research scripts and must be revalidated d
 | `0x28` | NPC base | Strong |
 | `0x30` | Room spawn modifier | Strong |
 | `0x32` | Item base | Strong |
-| `0x33` | Weapon modifier/category | Tentative |
-| `0x34` | Armor modifier/category | Tentative |
+| `0x33` | Weapon modifier/category | Strong |
+| `0x34` | Armor modifier/category | Strong |
 | `0x37` | Store/shop | Strong |
 | `0x48` | Skill trainer | Tentative |
 | `0x6D` | Peaceful/no-attack room | Tentative |
@@ -45,10 +45,27 @@ These meanings come from the existing research scripts and must be revalidated d
 | `0x72` | Tavern | Tentative |
 | `0x75` | Promotion room | Tentative |
 | `0x85` | Attribute trainer | Tentative |
-| `0xA6`–`0xAF` | Hidden exits by direction | Tentative |
+| `0xA6`–`0xAF` | Hidden exits by direction | Strong |
 | `0xC5` | Quest room/text | Tentative |
-| `0xCC` | Potion modifier/category | Tentative |
+| `0xCC` | Potion modifier/category | Strong |
 | `0xE0` | Trap modifier | Tentative |
+
+## Phase 3 MOD1 hypotheses
+
+These meanings are supported by decompiled `_ACQUIRE_MODIFICATION` consumers and data associations. They classify tags; they do not yet define complete byte layouts.
+
+| Tag or range | Working meaning | Confidence | DLL evidence |
+|---|---|---|---|
+| `0x5D` | Door strength or key rule | Tentative | `PICKSTRENGTH`, `DOORSTRENGTH`, `STEALSKEY` |
+| `0x76`–`0x7D` | NPC extra-attack slots 1–8 | Strong | `NPC_PRE_ATTACK`, `GET_XTRA_ATTACK` |
+| `0x8A`–`0x93` | Disease effect slots 1–10 | Tentative | disease tests, cure, and death cleanup |
+| `0x94`–`0x9D` | Poison effect slots 1–10 | Tentative | poison tests, antidote/cure, and death cleanup |
+| `0xB2` | Armor defense eligibility | Strong | `GET_AC`, `GET_AC2`, `GET_DPOOL` |
+| `0xE1`–`0xE3` | Trap event components | Strong | `DO_TRAP_EVENTS` |
+| `0xE4` | Limited shop stock | Strong | `LIMITED_AVAILABLE`, `PC_BUYITEM`, shop stock |
+| `0xEE`–`0xF0` | Conditional combat modifiers | Strong | bane to-hit/AC/defense-pool and damage multiplier |
+
+Only tag values present in the snapshot appear in the generated catalog; absent members of a DLL-observed range remain hypotheses rather than invented records. The detailed ignored report records evidence and confidence for all 113 present tags, including 72 with no assigned semantic name.
 
 ## Existing derived graph
 
