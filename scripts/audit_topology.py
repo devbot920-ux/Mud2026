@@ -545,6 +545,8 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Phase 2 Topology Audit",
         "",
+        "> Historical derived-graph baseline: canonical Phase 2 metrics now use all 7,097 source-decoded edges and are documented in `docs/CANONICAL_TOPOLOGY_AUDIT.md`.",
+        "",
         "This report is generated from the configured `derived_graph` source. The source was read only. Room descriptions are intentionally excluded.",
         "",
         "## Summary",

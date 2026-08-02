@@ -69,3 +69,10 @@ The canonical baseline stores every source schema object, row, and value with it
 - Status: Accepted
 
 The legacy graph contains 7,077 edges and is lossy. Phase 1 recovers all of them plus 20 additional edges: 19 were suppressed by one-target-per-direction behavior, and one was suppressed when NetworkX `DiGraph` collapsed two directions sharing the same endpoints. The canonical topology retains all 7,097 source-decoded edges; future audits and renderers must support multiedges.
+
+## D-011 — Canonical metrics supersede graph-only topology metrics
+
+- Date: 2026-08-02
+- Status: Accepted
+
+Connectivity, reachability, and asymmetry decisions will use all 7,097 Phase 1 topology edges. The earlier 7,077-edge graph-only audit remains a useful record of legacy-export loss but is no longer authoritative for topology metrics. Derived regions, coordinates, and feature flags remain presentation evidence because they do not yet have a canonical source-backed equivalent.

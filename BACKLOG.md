@@ -30,7 +30,16 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Audit door pairs, hidden exits, vertical links, portals, and transports
 - [x] Separate inferred region/layout data from original facts
 - [x] Select Pendelhaven (`R02`) as the leading golden-fixture region
-- [ ] Recompute and reconcile Phase 2 metrics against all 7,097 canonical edges
+- [x] Recompute and reconcile Phase 2 metrics against all 7,097 canonical edges
+
+## Phase 3 — Record-type reverse engineering
+
+- [ ] Generate a ranked unknown-tag research catalog with representative records
+- [ ] Correlate high-frequency MOD1 tags with entity keys and known modifiers
+- [ ] Trace DLL Btrieve access patterns to tag and byte-offset hypotheses
+- [ ] Decode and test gameplay-critical NPC and item properties first
+- [ ] Decode door/lock, store, quest, combat, and behavior records
+- [ ] Record evidence and confidence for every tag; preserve unresolved tags
 
 ## Research queue
 

@@ -97,3 +97,24 @@ Generated privately at `var/baseline/rose-baseline.sqlite` from the tracked `sch
 The baseline reproduces every published graph node and edge while retaining 20 additional source-decoded edges. Nineteen collide with another edge from the same room/direction in the legacy builder; one shares endpoints with another direction and was collapsed by a simple directed graph representation.
 
 Canonical raw tables are `source_file`, `schema_object`, `source_row`, and `source_value`. Additive interpretation tables are `decoded_entity`, `decoded_field`, `topology_edge`, and `mod1_tag_catalog`. `import_run` records the schema version and semantic digest.
+
+## Canonical topology audit
+
+The canonical Phase 2 audit uses all 7,097 source-decoded edges. It uses `graph.json` only to attach derived region, coordinate, portal/transport, and other presentation attributes.
+
+| Finding | Canonical value | Change from derived graph | Confidence |
+|---|---:|---:|---|
+| Rooms | 3,446 | 0 | Strong identity |
+| Directed edges | 7,097 | +20 | Tentative decoding with source provenance |
+| Weak components | 49 | -1 | Strong for canonical edge set |
+| Strong components | 63 | -16 | Strong for canonical edge set |
+| Rooms reachable from seed room 1 | 3,383 | +465 | Strong for canonical edge set |
+| Rooms unreachable from seed room 1 | 63 | -465 | Strong for canonical edge set |
+| Missing inverse-direction counterparts | 189 | +20 | Strong structural finding |
+| Door/hidden inconsistent reverse pairs | 17 | 0 | Strong structural finding |
+| Vertical edges | 104 | 0 | Tentative direction decoding |
+| Cross-region edges | 49 | +2 | Tentative topology plus derived regions |
+
+Canonical asymmetric edges are structurally grouped as 106 reverse endpoints with non-opposite directions, 60 plain one-way links, 14 vertical links, 4 cross-region links, 2 door links, 2 portal/transport-endpoint links, and 1 hidden link. Intent remains unknown.
+
+Recovered links between rooms 3045 and 3046 connect the formerly separate 322-room component to the main world. Other recovered door directions account for most of the improved directed reachability and strong connectivity.

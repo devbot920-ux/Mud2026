@@ -2,13 +2,13 @@
 
 Updated: 2026-08-02
 Branch: `dev`
-Milestone: Phase 1 — reproducible baseline import complete; canonical topology re-audit pending
+Milestone: Phase 2 — canonical topology audit complete
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
-Phase 1 now imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. It also ports the legacy-understood DES1/MOD1 decoding with field-level evidence and reconciles the source-decoded topology against the derived graph. Phase 2 previously audited the derived graph; its metrics must now be recomputed against the 20 additional source-backed edges retained by Phase 1.
+Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 now audits all 7,097 source-decoded edges while using the old graph only for derived regions, coordinates, and presentation flags. The canonical audit supersedes the earlier graph-only connectivity metrics.
 
 Known source evidence:
 
@@ -42,6 +42,10 @@ Initial read-only analysis found:
 - Integrity, component, reachability, reverse-link, special-topology, and derived-layout checks
 - Explicit structural classification of all 169 missing reverse counterparts
 - Auditable golden-fixture ranking selecting Pendelhaven (`R02`) as the leading candidate
+- Canonical adapter and comparison audit at `scripts/audit_canonical_topology.py`
+- Canonical report at `docs/CANONICAL_TOPOLOGY_AUDIT.md`
+- Source-row and byte-offset provenance for all 20 edges omitted by the legacy graph
+- Complete metric comparison showing how recovered multiedges change components and reachability
 
 ## Phase 1 deliverables
 
@@ -84,14 +88,23 @@ Phase 1 verification completed on 2026-08-02:
 - Semantic digest — `40D6E03DB1F44C70C848C5920D1D0BC9CC3FB7AEB0BC0839621565D21DA2A3EA`
 - Reconciliation — zero missing/extra nodes, zero missing published edges, 20 additional source-decoded edges
 
+Canonical Phase 2 verification completed on 2026-08-02:
+
+- `python -m unittest discover -s tests -q` — 27 tests passed
+- `python scripts/audit_canonical_topology.py` — 3,446 rooms, 7,097 edges, 189 missing reverse counterparts
+- Integrity — zero duplicate IDs/logical edges, dangling edges, or unknown directions
+- Connectivity — 49 weak components, 63 strong components, and 3,383 rooms reachable from seed room 1
+- Recovered-edge effect — one fewer weak component, 16 fewer strong components, and 465 more rooms reachable from seed
+- Repeated canonical-audit SHA-256 — `A12DCDADDEE3ED057E7D5956F4A13CE9C5DD19E4D87BBA9A990C1BD094F27179`
+- Pendelhaven (`R02`) remains the leading golden-fixture candidate
+
 ## Unresolved questions
 
 - Which MOD1 tags encode core NPC, item, combat, store, lock, and quest behavior?
 - What are the semantic roles of INS1, ACT1, NAM1, RAND, SPEL, and HEL1 records?
 - Which structurally asymmetric connections are intentional rather than extraction artifacts?
-- How do the 20 source-backed edges omitted by `graph.json` change Phase 2 component, reachability, and asymmetry metrics?
 - Region assignments remain derived and are not yet present in the canonical source-backed model.
 
 ## Exact next task
 
-Re-run the Phase 2 topology analysis against the canonical Phase 1 edge set, compare its metrics with the derived-graph audit, and document the effect of the 20 recovered edges. Then begin systematic decoding of the remaining MOD1 tags.
+Begin Phase 3 by cataloging and systematically decoding the remaining MOD1 tags, prioritizing high-frequency NPC, item, combat, door/lock, store, and quest behavior.
