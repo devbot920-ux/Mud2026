@@ -1,0 +1,30 @@
+# Local source locations and private manifests
+config/source_paths.local.json
+var/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated exports
+build/
+dist/
+exports/
+
+# Original/proprietary Rose COG data must never be committed
+*.db
+*.dat
+*.dll
+*.DLL
+*.gzf

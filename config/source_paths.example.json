@@ -1,0 +1,23 @@
+{
+  "sources": [
+    {
+      "name": "decompiled_dll",
+      "path": "C:\\temp\\decompileproject\\decomp2",
+      "include": ["RCIROSE.DLL.c", "RCIROSE.DLL.gzf", "RCIROSE.DLL.h"]
+    },
+    {
+      "name": "derived_graph",
+      "path": "C:\\temp\\DoorTelnet\\graph.json"
+    },
+    {
+      "name": "sqlite_databases",
+      "path": "C:\\dos\\modules",
+      "include": ["*.db"]
+    },
+    {
+      "name": "legacy_extractors",
+      "path": "C:\\temp\\phyton",
+      "include": ["*.py"]
+    }
+  ]
+}
