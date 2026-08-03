@@ -1,0 +1,7 @@
+{
+  "name": "Mud2026.Editor",
+  "rootNamespace": "Mud2026.UnityPrototype.Editor",
+  "references": ["Mud2026.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

@@ -22,6 +22,17 @@ build/
 dist/
 exports/
 
+# Unity comparison prototype
+prototypes/unity/[Ll]ibrary/
+prototypes/unity/[Tt]emp/
+prototypes/unity/[Oo]bj/
+prototypes/unity/[Ll]ogs/
+prototypes/unity/[Uu]ser[Ss]ettings/
+prototypes/unity/Builds/
+prototypes/unity/PrivateData/
+prototypes/unity/Assets/StreamingAssets/pendelhaven-v1.json
+prototypes/unity/TestResults.xml
+
 # Original/proprietary Rose COG data must never be committed
 *.db
 *.dat
