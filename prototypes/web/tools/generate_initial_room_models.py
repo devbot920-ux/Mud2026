@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -72,6 +72,11 @@ def sphere(name, location, scale, mat):
 def export_glb(name: str) -> Path:
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / name
+    # Builders use Three.js coordinates (X right, Y up, Z depth). Convert them
+    # to Blender's Z-up coordinates before the Blender -> glTF axis conversion.
+    three_to_blender = Matrix.Rotation(math.pi / 2, 4, "X")
+    for obj in bpy.context.scene.objects:
+        obj.matrix_world = three_to_blender @ obj.matrix_world
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True, export_apply=True)
     return path
@@ -163,7 +168,7 @@ def build_parchment() -> Path:
     return export_glb("old_parchment_3985.glb")
 
 
-def look_at(obj, target=(0, 1.2, -2.5)):
+def look_at(obj, target=(0, 2.5, 1.2)):
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
 
 
@@ -173,21 +178,21 @@ def render_preview(paths: list[Path]) -> None:
         bpy.ops.import_scene.gltf(filepath=str(path))
         imported = list(bpy.context.selected_objects)
         if "old_man" in path.name:
-            for obj in imported: obj.location += Vector((2.7, 0, -6.5))
+            for obj in imported: obj.location += Vector((2.7, 6.5, 0))
         elif "parchment" in path.name:
             for obj in imported:
-                obj.location += Vector((-2.6, 2.0, -8.5))
-                obj.rotation_euler.y += math.pi
-    bpy.ops.object.camera_add(location=(14.5, 11.5, 16.5))
+                obj.location += Vector((-2.6, 8.5, 2.0))
+                obj.rotation_euler.z += math.pi
+    bpy.ops.object.camera_add(location=(14.5, -16.5, 11.5))
     camera = bpy.context.object
     camera.data.lens = 28
     look_at(camera)
     bpy.context.scene.camera = camera
-    bpy.ops.object.light_add(type="AREA", location=(0, 8, 1))
+    bpy.ops.object.light_add(type="AREA", location=(0, -1, 8))
     bpy.context.object.data.energy = 1300
     bpy.context.object.data.shape = "DISK"
     bpy.context.object.data.size = 8
-    bpy.ops.object.light_add(type="AREA", location=(-5, 3, 4))
+    bpy.ops.object.light_add(type="AREA", location=(-5, -4, 3))
     bpy.context.object.data.energy = 700
     bpy.context.object.data.color = (1.0, 0.55, 0.25)
     look_at(bpy.context.object)
