@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phases 0–4 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, Phase 3 catalogs all 118 MOD1 tags, and Phase 4 exports a closed Pendelhaven fixture through a versioned engine-neutral contract. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff and [docs/GOLDEN_FIXTURE_EXPORT.md](docs/GOLDEN_FIXTURE_EXPORT.md) for Phase 4.
+Phases 0–5 are implemented through the engine-comparison stage. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, Phase 3 catalogs all 118 MOD1 tags, Phase 4 exports a closed Pendelhaven fixture, and Phase 5 loads that same corrected export in Godot, Unity, and Three.js prototypes. See [PROJECT_STATUS.md](PROJECT_STATUS.md), [docs/GOLDEN_FIXTURE_EXPORT.md](docs/GOLDEN_FIXTURE_EXPORT.md), and [docs/ENGINE_PROTOTYPE_COMPARISON.md](docs/ENGINE_PROTOTYPE_COMPARISON.md).
 
 ## Safety and data ownership
 
@@ -72,3 +72,4 @@ The inventory is written to `var/manifests/source-manifest.json`, which Git igno
 - `scripts/` — reproducible read-only tooling
 - `tests/` — automated validation
 - `viewer/` — engine-neutral private-export inspector
+- `prototypes/` — comparable Godot, Unity, and Three.js playable-client spikes

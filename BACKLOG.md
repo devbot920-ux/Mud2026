@@ -51,10 +51,20 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 ## Phase 5 — Engine evaluation spike
 
-- [ ] Define renderer evaluation criteria against the Pendelhaven fixture
-- [ ] Prototype fixture loading in the leading engine candidates without changing the export contract
-- [ ] Compare navigation, asset pipeline, AI-assisted iteration, deployment, and maintenance cost
+- [x] Define renderer evaluation criteria against the Pendelhaven fixture
+- [x] Prototype the unchanged fixture in Godot, Unity, and Three.js
+- [x] Compare navigation, asset pipeline, AI-assisted iteration, deployment, and maintenance cost
 - [ ] Select the first playable-client engine and record the decision
+
+## Phase 6 — First sustained playable client
+
+- [ ] Run the documented hands-on comparison route in all three prototypes
+- [ ] Confirm the primary engine and archive the other clients as reference implementations
+- [ ] Install matching export templates/modules for the selected deployment targets
+- [ ] Add stateful doors and room interaction without changing canonical topology
+- [ ] Add inventory and equipment from evidence-backed item fields
+- [ ] Add NPC interaction and spawning from evidence-backed fixture fields
+- [ ] Add private save-state persistence separate from canonical source data
 
 ## Research queue
 

@@ -2,13 +2,15 @@
 
 Updated: 2026-08-03
 Branch: `dev`
-Milestone: Phase 5 — corrected Pendelhaven engine prototypes in progress
+Milestone: Phase 5 — three corrected Pendelhaven engine prototypes complete
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
 Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 118 MOD1 tags. Phase 4 defines an engine-neutral versioned JSON contract and closes the 60-room Pendelhaven fixture over topology, spawns, referenced entities, and modifiers. A 2026-08-03 correction promoted the MOD1 tag from one byte to little-endian `u16`, separating several previously collapsed high tags before Phase 5 client work.
+
+Phase 5 now has comparable Godot 4.7.1, Unity 6000.5.6f1, and Three.js clients loading the same corrected fixture. Godot remains the technical recommendation, but final selection awaits the owner's hands-on comparison.
 
 Known source evidence:
 
@@ -80,6 +82,16 @@ Initial read-only analysis found:
 - Minimal engine-neutral browser viewer at `viewer/index.html`
 - Tracked report at `docs/GOLDEN_FIXTURE_EXPORT.md`; generated source content remains under ignored `var/exports/`
 
+## Phase 5 deliverables
+
+- Equivalent code-driven room-stage prototypes under `prototypes/godot`, `prototypes/unity`, and `prototypes/web`
+- Strict corrected-fixture validation in all three clients
+- First-person movement, canonical edge portals, text commands, room UI, spawn placeholders, hidden toggle, and developer overlay
+- Godot headless/editor runtime verification with 15 assertions
+- Unity 5/5 EditMode verification and successful Windows x64 development build
+- Three.js 10/10 tests, production Vite build, zero npm audit findings, and real-browser travel smoke test
+- Tracked evaluation at `docs/ENGINE_PROTOTYPE_COMPARISON.md`
+
 ## Evidence and verification
 
 The inventory script opens files only for binary reading and writes only its configured manifest below the repository. Inputs are expanded deterministically and duplicate resolved files are rejected from duplicate output.
@@ -138,6 +150,16 @@ Phase 4 verification completed on 2026-08-02:
 - All source databases and the canonical baseline remained read-only
 - `git diff --check` — passed before commit
 
+Phase 5 verification completed on 2026-08-03:
+
+- Shared Python suite — 36/36 tests passed
+- Godot 4.7.1 — 15/15 fixture assertions, editor import, and headless runtime passed
+- Unity 6000.5.6f1 — 5/5 EditMode tests passed; Windows x64 development build succeeded at approximately 148.5 MB
+- Three.js — 10/10 tests, TypeScript check, Vite production build, and browser travel smoke passed
+- Three.js dependency audit — zero known vulnerabilities; production JavaScript 492.15 kB / 124.98 kB gzip
+- All three clients consumed the unchanged corrected fixture; generated builds and private source content remain ignored
+- `git diff --check` — passed
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
@@ -149,4 +171,4 @@ Phase 4 verification completed on 2026-08-02:
 
 ## Exact next task
 
-Begin Phase 5 by defining evaluation criteria and loading the unchanged Pendelhaven `1.0.0` export into leading 3D engine candidates. Continue decoding ranked MOD1 unknowns when playable fixture behavior requires them.
+Run the Phase 5 hands-on comparison route in all three clients, select the sustained Phase 6 engine, and install its matching export support. Continue decoding only the fixture fields needed by the next playable interaction slice.
