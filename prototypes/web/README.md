@@ -18,7 +18,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 ## Controls and behavior
 
 - Click the chamber to capture the mouse; use mouse look and WASD movement. Room 3976 constrains movement at its modeled walls.
-- Face the nearby old man or parchment and press `E` when the interaction prompt appears.
+- Aim the reticle at any spawned NPC or item to display its extracted description automatically. Approach and press `E` when an action prompt appears.
 - Walk close to an exit arch to follow that exact directed edge.
 - Submit `look`, `examine old man`, `talk to old man`, `read parchment`, or `take parchment` to play room 3976 entirely through MUD-style commands.
 - Submit `n`, `s`, `e`, `w`, `ne`, `nw`, `se`, `sw`, `u`, `d`, or their full names to travel.
@@ -28,6 +28,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - Multiple arches remain distinct for parallel same-direction edges. In the fixture, room 4057's west edge leads to 4058 and room 4058's west edge remains west; no inverse is invented.
 - NPCs and items appear as labeled red and amber markers using the fixture's room-keyed spawn records.
 - Room 3976 replaces its generic chamber with a generated stone training room. NPC 3993 and item 3985 load generated low-poly models, while the old man's circular ground marker remains for readability.
+- The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
 
 ## Initial room models
 
@@ -40,7 +41,7 @@ cd C:\code\Mud2026
 
 The generator writes its preview to ignored `var/previews/initial-room-models.png`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.
 
-Room 3976 is a functional tutorial-room vertical slice with collision boundaries, proximity/facing interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. Other rooms remain comparison-prototype chambers. Door open/lock state, inventory, NPC AI, combat, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
+Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3982 add a small in-memory inventory and deterministic practice-dummy combat. Other rooms remain comparison-prototype chambers. Door open/lock state, general NPC AI, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
 
 ## Verification
 
@@ -49,4 +50,4 @@ Room 3976 is a functional tutorial-room vertical slice with collision boundaries
 & 'C:\Program Files\nodejs\npm.cmd' run build
 ```
 
-Tests use only synthetic/public rule inputs. They cover contract/reference checks, hidden and vertical exits, parallel edges, boundary stubs, spawns, the unusual 4057/4058 same-west relationship, room 3976 wall constraints, interaction targeting, and tutorial command parsing.
+Tests use only synthetic/public rule inputs. They cover contract/reference checks, hidden and vertical exits, parallel edges, boundary stubs, spawns, the unusual 4057/4058 same-west relationship, room 3976 wall constraints, gaze targeting, tutorial/gameplay command parsing, and knife practice-damage behavior.

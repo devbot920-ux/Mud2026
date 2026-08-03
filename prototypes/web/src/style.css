@@ -8,6 +8,7 @@ h1 { margin: 5px 0 8px; color: #f1d99a; font-size: 23px; }
 #description { margin: 0; max-height: 130px; overflow: auto; color: #d7d2c3; }
 #exits { margin-top: 10px; color: #a9c7c2; font-family: ui-monospace, monospace; }
 #developer { position: fixed; right: 20px; top: 20px; width: 310px; white-space: pre-wrap; padding: 13px; background: #050809e6; border: 1px solid #3f7770; color: #8cd0c5; font: 12px/1.45 ui-monospace, monospace; }
+#player-status { position: fixed; right: 20px; top: 20px; min-width: 210px; white-space: pre-line; padding: 11px 14px; color: #eadcae; background: #090b0de8; border: 1px solid #75623c; font: 12px/1.55 ui-monospace, monospace; }
 #reticle { position: fixed; left: 50%; top: 50%; color: #fff9; font: 22px monospace; transform: translate(-50%,-50%); }
 #interaction-prompt { position: fixed; left: 50%; top: calc(50% + 32px); transform: translateX(-50%); padding: 7px 12px; color: #fff2c5; background: #111c; border: 1px solid #b79855; font: 13px ui-monospace, monospace; }
 #interaction-panel { position: fixed; right: 20px; bottom: 96px; width: min(440px, calc(100vw - 40px)); max-height: 42vh; overflow: auto; padding: 16px 18px; color: #ddd5bf; background: #11100eeb; border: 1px solid #997b43; box-shadow: 0 12px 35px #000b; white-space: pre-line; }
