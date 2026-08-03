@@ -1,0 +1,17 @@
+:root { color: #e8dfc4; background: #090b0d; font: 15px/1.45 Georgia, serif; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+#world { width: 100vw; height: 100vh; display: block; }
+#room-panel { position: fixed; left: 24px; top: 22px; width: min(560px, calc(100vw - 48px)); padding: 18px 22px; background: linear-gradient(135deg, #10161dea, #17140fe0); border: 1px solid #796b49; box-shadow: 0 16px 50px #000b; }
+.eyebrow { color: #b99a5d; letter-spacing: .16em; font: 11px Arial, sans-serif; }
+h1 { margin: 5px 0 8px; color: #f1d99a; font-size: 23px; }
+#description { margin: 0; max-height: 130px; overflow: auto; color: #d7d2c3; }
+#exits { margin-top: 10px; color: #a9c7c2; font-family: ui-monospace, monospace; }
+#developer { position: fixed; right: 20px; top: 20px; width: 310px; white-space: pre-wrap; padding: 13px; background: #050809e6; border: 1px solid #3f7770; color: #8cd0c5; font: 12px/1.45 ui-monospace, monospace; }
+#reticle { position: fixed; left: 50%; top: 50%; color: #fff9; font: 22px monospace; transform: translate(-50%,-50%); }
+#help { position: fixed; bottom: 57px; left: 50%; transform: translateX(-50%); color: #ddd; background: #000a; padding: 5px 10px; font: 12px Arial; }
+#command-form { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); width: min(620px, calc(100vw - 40px)); display: flex; gap: 8px; padding: 9px 12px; background: #080a0ded; border: 1px solid #75623c; font-family: ui-monospace, monospace; }
+#command { flex: 1; border: 0; outline: 0; color: #f0dfae; background: transparent; font: inherit; }
+#command-form button { border: 1px solid #75623c; color: #f0dfae; background: #272015; font: inherit; cursor: pointer; }
+#error { position: fixed; inset: 20% 15%; padding: 24px; background: #250d0ded; border: 1px solid #d86a5c; color: #ffd2ca; white-space: pre-wrap; }
+@media(max-width: 850px) { #developer { top:auto; bottom: 95px; right: 12px; width: 260px; } #room-panel { left: 12px; top: 12px; width: calc(100vw - 24px); } }
