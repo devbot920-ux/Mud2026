@@ -4,3 +4,8 @@
 *.json text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+
+# Unity serializes empty YAML values with significant trailing spaces.
+prototypes/unity/**/*.meta -whitespace
+prototypes/unity/**/*.asset -whitespace
+prototypes/unity/**/*.unity -whitespace
