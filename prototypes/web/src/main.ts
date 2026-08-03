@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import "./style.css";
 import { commandDirection, edgesFrom, field, travel, validateWorld, type Edge, type Entity, type Room, type World } from "./model";
 
@@ -10,11 +11,12 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x07090b); scene.fog = new THREE.Fog(0x07090b, 12, 29);
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 80); camera.rotation.order = "YXZ";
 const chamber = new THREE.Group(); scene.add(chamber);
+const modelLoader = new GLTFLoader();
 scene.add(new THREE.HemisphereLight(0x8ba7b5, 0x251a0e, 1.6));
 const torch = new THREE.PointLight(0xffb45c, 40, 24); torch.position.set(0, 3.2, 0); torch.castShadow = true; scene.add(torch);
 
 let world: World; let currentRoomId = 3976; let showHidden = false; let developerVisible = true;
-let yaw = 0, pitch = 0; const keys = new Set<string>(); const exitTriggers: { edge: Edge; position: THREE.Vector3 }[] = [];
+let yaw = 0, pitch = 0, roomGeneration = 0; const keys = new Set<string>(); const exitTriggers: { edge: Edge; position: THREE.Vector3 }[] = [];
 const title = document.querySelector<HTMLElement>("#title")!; const description = document.querySelector<HTMLElement>("#description")!;
 const exitsElement = document.querySelector<HTMLElement>("#exits")!; const developer = document.querySelector<HTMLElement>("#developer")!;
 
@@ -26,22 +28,55 @@ const positions: Record<string, THREE.Vector3> = {
 function material(color: number, roughness=.8) { return new THREE.MeshStandardMaterial({ color, roughness }); }
 function addBox(size: THREE.Vector3, at: THREE.Vector3, color: number) { const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size.toArray()), material(color)); mesh.position.copy(at); mesh.receiveShadow = mesh.castShadow = true; chamber.add(mesh); return mesh; }
 
-function marker(entity: Entity, kind: "npc"|"item", index: number) {
+async function addModel(path: string, generation: number, configure?: (model: THREE.Group) => void) {
+  try {
+    const gltf = await modelLoader.loadAsync(path);
+    if (generation !== roomGeneration) return;
+    gltf.scene.traverse(object => { if (object instanceof THREE.Mesh) object.castShadow = object.receiveShadow = true; });
+    configure?.(gltf.scene);
+    chamber.add(gltf.scene);
+  } catch (error) {
+    console.warn(`Unable to load ${path}; keeping the procedural marker.`, error);
+  }
+}
+
+function marker(entity: Entity, kind: "npc"|"item", index: number, generation: number) {
   const color = kind === "npc" ? 0xa94d3c : 0xc3a44d; const radius = kind === "npc" ? .42 : .25;
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 12), material(color,.55));
-  const angle = index * 2.2; mesh.position.set(Math.cos(angle) * 2.3, radius, Math.sin(angle) * 2.3); mesh.castShadow = true; chamber.add(mesh);
+  const angle = index * 2.2; const defaultPosition = new THREE.Vector3(Math.cos(angle) * 2.3, radius, Math.sin(angle) * 2.3);
+  const knownPosition = entity.id === 3993 ? new THREE.Vector3(2.7, radius, -7.15) : entity.id === 3985 ? new THREE.Vector3(-2.6, 2.05, -8.55) : defaultPosition;
+  mesh.position.copy(knownPosition); mesh.castShadow = true; chamber.add(mesh);
   const label = sprite(`${kind.toUpperCase()} · ${field(entity,"short_description",String(entity.id))}`); label.position.copy(mesh.position).add(new THREE.Vector3(0,1,0)); chamber.add(label);
+  if (entity.id === 3993) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.72,.07,8,32),new THREE.MeshBasicMaterial({color:0xe56b50}));
+    ring.rotation.x = Math.PI / 2; ring.position.set(2.7,.04,-7.15); chamber.add(ring);
+    mesh.visible = false;
+    void addModel("/models/generated/old_man_3993.glb", generation, model => model.position.set(2.7,0,-7.15));
+  } else if (entity.id === 3985) {
+    mesh.visible = false;
+    label.position.set(-2.6,3.25,-8.35);
+    void addModel("/models/generated/old_parchment_3985.glb", generation, model => { model.position.set(-2.6,2.05,-8.55); model.rotation.y = Math.PI; });
+  }
 }
 
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
 
 function buildRoom() {
-  chamber.clear(); exitTriggers.length = 0; camera.position.set(0,1.7,0);
-  addBox(new THREE.Vector3(18,.3,18), new THREE.Vector3(0,-.18,0),0x3b3427); addBox(new THREE.Vector3(18,.3,18),new THREE.Vector3(0,5.1,0),0x24272a);
+  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; camera.position.set(0,1.7,0);
+  if (currentRoomId === 3976) {
+    void addModel("/models/generated/training_room_3976.glb", generation);
+  } else {
+    addBox(new THREE.Vector3(18,.3,18), new THREE.Vector3(0,-.18,0),0x3b3427); addBox(new THREE.Vector3(18,.3,18),new THREE.Vector3(0,5.1,0),0x24272a);
+  }
   const visible = edgesFrom(world,currentRoomId,showHidden); const groups = new Map<string,Edge[]>();
   for (const edge of visible) groups.set(edge.direction,[...(groups.get(edge.direction)??[]),edge]);
   for (const [direction, group] of groups) group.forEach((edge,index) => {
     const base=positions[direction] ?? new THREE.Vector3(); const tangent=new THREE.Vector3(-base.z,0,base.x).normalize(); const at=base.clone().addScaledVector(tangent,(index-(group.length-1)/2)*1.7);
+    if (currentRoomId === 3976 && direction === "W") {
+      const label=sprite(`${direction} → ${edge.to_room}`);label.position.copy(at).setY(3.5);chamber.add(label);
+      exitTriggers.push({edge,position:at});
+      return;
+    }
     const arch=new THREE.Group(); const tint=edge.hidden?0x724c72:edge.door?0x87552f:world.rooms.find(r=>r.id===edge.to_room)?.scope==="stub"?0x376471:0x4e756d;
     const left=addBox(new THREE.Vector3(.35,2.8,.45),at.clone().addScaledVector(tangent,-.85).setY(1.4),tint); const right=addBox(new THREE.Vector3(.35,2.8,.45),at.clone().addScaledVector(tangent,.85).setY(1.4),tint); const top=addBox(new THREE.Vector3(2.05,.35,.45),at.clone().setY(2.8),tint); arch.add(left,right,top); chamber.add(arch);
     if (edge.door) addBox(new THREE.Vector3(1.3,2.3,.18),at.clone().setY(1.15),0x51301c);
@@ -49,7 +84,7 @@ function buildRoom() {
     exitTriggers.push({edge,position:at});
   });
   const roomSpawn=world.spawns.find(s=>s.id===currentRoomId); let markerIndex=0;
-  for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e) marker(e,entry.entity_type,markerIndex++); }
+  for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e) marker(e,entry.entity_type,markerIndex++,generation); }
   renderUi();
 }
 
