@@ -16,12 +16,14 @@ function fixture(): World {
 }
 
 describe("world contract",()=>{
-  it("validates a fixture with parallel and same-west edges",()=>{const w=validateWorld(fixture());expect(edgesFrom(w,4057)).toHaveLength(2);expect(edgesFrom(w,4057).map(e=>e.direction)).toEqual(["W","W"]);expect(edgesFrom(w,4058)[0].direction).toBe("W");});
+  it("validates a fixture with parallel and same-west edges",()=>{const w=validateWorld(fixture(),false);expect(edgesFrom(w,4057)).toHaveLength(2);expect(edgesFrom(w,4057).map(e=>e.direction)).toEqual(["W","W"]);expect(edgesFrom(w,4058)[0].direction).toBe("W");});
   it("suppresses hidden edges until requested",()=>{const w=fixture();expect(edgesFrom(w,4057).some(e=>e.hidden)).toBe(false);expect(edgesFrom(w,4057,true).some(e=>e.hidden)).toBe(true);});
   it("uses authoritative first parallel edge for a command",()=>expect(travel(fixture(),4057,"west")?.id).toBe(1));
   it("supports vertical and abbreviated commands",()=>expect(travel(fixture(),4057,"u",true)?.id).toBe(4));
-  it("rejects dangling edges",()=>{const w=fixture();w.edges[0].to_room=999;expect(()=>validateWorld(w)).toThrow(/missing endpoint/);});
-  it("rejects dangling spawn references",()=>{const w=fixture();w.spawns[0].entries[0].entity_id=999;expect(()=>validateWorld(w)).toThrow(/missing npc/);});
-  it("rejects a contract version change",()=>{const w=fixture();w.contract.version="2.0.0";expect(()=>validateWorld(w)).toThrow(/unsupported contract/);});
-  it("rejects a fixture count mismatch",()=>{const w=fixture();w.fixture.stub_room_ids=[];expect(()=>validateWorld(w)).toThrow(/room count/);});
+  it("rejects dangling edges",()=>{const w=fixture();w.edges[0].to_room=999;expect(()=>validateWorld(w,false)).toThrow(/missing endpoint/);});
+  it("rejects dangling spawn references",()=>{const w=fixture();w.spawns[0].entries[0].entity_id=999;expect(()=>validateWorld(w,false)).toThrow(/missing npc/);});
+  it("rejects a contract version change",()=>{const w=fixture();w.contract.version="2.0.0";expect(()=>validateWorld(w,false)).toThrow(/unsupported contract/);});
+  it("rejects a fixture count mismatch",()=>{const w=fixture();w.fixture.stub_room_ids=[];expect(()=>validateWorld(w,false)).toThrow(/room count/);});
+  it("rejects duplicate edge IDs",()=>{const w=fixture();w.edges[1].id=w.edges[0].id;expect(()=>validateWorld(w,false)).toThrow(/duplicated/);});
+  it("enforces exact private-fixture counts by default",()=>expect(()=>validateWorld(fixture())).toThrow(/rooms count must be 63/));
 });
