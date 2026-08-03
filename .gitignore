@@ -21,6 +21,9 @@ Thumbs.db
 build/
 dist/
 exports/
+prototypes/web/node_modules/
+prototypes/web/dist/
+prototypes/web/public/private/
 
 # Unity comparison prototype
 prototypes/unity/[Ll]ibrary/

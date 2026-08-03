@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mud2026 · Three.js prototype</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <canvas id="world"></canvas>
+    <section id="room-panel">
+      <div class="eyebrow">PENDELHAVEN · THREE.JS SPIKE</div>
+      <h1 id="title">Loading…</h1>
+      <p id="description"></p>
+      <div id="exits"></div>
+    </section>
+    <aside id="developer"></aside>
+    <div id="reticle">+</div>
+    <div id="help">Click to capture mouse · WASD move/look · approach an arch to travel · H hidden exits · ` developer data</div>
+    <form id="command-form">
+      <span>&gt;</span><input id="command" autocomplete="off" spellcheck="false" placeholder="look, n, sw, u…" /><button type="submit">Go</button>
+    </form>
+    <div id="error" hidden></div>
+  </body>
+</html>
