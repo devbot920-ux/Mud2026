@@ -20,7 +20,7 @@ class GoldenFixtureExportTests(unittest.TestCase):
         connection.execute("INSERT INTO source_file VALUES(1,'RCI_MOD1','RCI_MOD1.db',1,?)", ("a" * 64,))
 
         def raw(source_row_id, owner, tag):
-            data = bytearray(223); data[:4] = int(owner).to_bytes(4, "little"); data[8] = tag
+            data = bytearray(223); data[:4] = int(owner).to_bytes(4, "little"); data[8:10] = tag.to_bytes(2, "little")
             identity = json.dumps({"id": source_row_id, "key_0": owner, "source_ordinal": source_row_id}, separators=(",", ":"))
             connection.execute("INSERT INTO source_row VALUES(?,1,'data_t',?,?,?)",
                                (source_row_id, source_row_id, identity, hashlib.sha256(data).hexdigest()))
@@ -78,7 +78,7 @@ class GoldenFixtureExportTests(unittest.TestCase):
 
     def test_unknown_modifier_preserves_complete_raw_record(self):
         document = exporter.build_export(self.database, self.graph)
-        unknown = next(item for item in document["modifiers"] if item["tag"] == "0xFE")
+        unknown = next(item for item in document["modifiers"] if item["tag"] == "0x00FE")
         self.assertIsNone(unknown["name"]); self.assertEqual(unknown["confidence"], "unknown")
         self.assertEqual(len(base64.b64decode(unknown["raw_data_base64"])), 223)
 

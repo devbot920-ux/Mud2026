@@ -28,8 +28,7 @@ On the 2026-08-02 source snapshot the baseline contains:
 - 13 source files; 16,720 rows; 58,531 values
 - 97 schema objects (39 tables, 50 indexes, 8 triggers)
 - 4,398 DES1 records (4,397 distinct embedded identifiers)
-- 3,446 room-base, 78 door, 549 item-base (529 distinct IDs), 211 NPC-base,
-  and 387 spawn records
+- 3,446 room-base, 78 door, 529 item-base, 211 NPC-base, and 333 spawn records
 - 7,097 source-decoded topology edges: 7,017 base and 80 door
 
 ## Provisional decoding rules
@@ -37,8 +36,8 @@ On the 2026-08-02 source snapshot the baseline contains:
 All interpretations are ports of assumptions in
 `C:\temp\phyton\02_secondrealtry.py`, not newly inferred meanings:
 
-- MOD1 record tag: byte offset 8 (zero-based). The machine-readable catalog
-  includes all 113 observed values. A short record is cataloged with a null
+- MOD1 record tag: little-endian `u16` at byte offsets 8–9 (zero-based). The
+  machine-readable catalog includes all 118 observed values. A short record is cataloged with a null
   tag; none are short in the current source snapshot.
 - Embedded ID: little-endian u32 at offset 0 (`strong`).
 - Short description: up to 50 bytes from offset 70, NUL-trimmed CP437
@@ -92,6 +91,6 @@ inputs on the current runtime. Tests cover full BLOB/schema preservation,
 unknown and truncated tags, decoding provenance, source immutability,
 idempotence, atomic failure, and truncated/unknown direction bytes.
 
-Most of the 113 MOD1 tags and the semantic contents of INS1, ACT1, NAM1, HEL1,
+Most of the 118 MOD1 tags and the semantic contents of INS1, ACT1, NAM1, HEL1,
 RAND, and SPEL remain undecoded. Raw preservation makes future decoding
 additive without requiring another conversion from the original databases.

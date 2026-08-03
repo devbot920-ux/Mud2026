@@ -39,7 +39,7 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Trace DLL modification lookups to tag hypotheses and field-research leads
 - [x] Decode and test initial gameplay-critical NPC and item tag families
 - [x] Decode initial door/lock, store, quest, combat, and behavior tag families
-- [x] Record evidence and confidence for every tag; preserve 72 unresolved tags
+- [x] Record evidence and confidence for every tag; preserve 77 unresolved tags
 
 ## Phase 4 — Golden fixture and export contract
 
@@ -61,4 +61,4 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [ ] Decode the ranked high-frequency unknown MOD1 tags
 - [ ] Trace DLL consumers from tag-level meanings to exact record fields
 - [ ] Decode INS1, SPEL, ACT1, NAM1, HEL1, and RAND
-- [ ] Determine why 549 item-base records map to 529 item keys
+- [x] Resolve the apparent 549/529 item mismatch as a one-byte tag-decoding collision (`0x0032` versus `0x0432`)

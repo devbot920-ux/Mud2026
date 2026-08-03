@@ -89,9 +89,9 @@ def read_mod1(path: Path) -> list[dict[str, Any]]:
         connection.close()
     result = []
     for source_row_id, key_0, key_1, data in rows:
-        if not isinstance(data, bytes) or len(data) <= 8:
-            raise ValueError(f"MOD1 source row {source_row_id} has no tag byte at offset 8")
-        result.append({"source_row_id": source_row_id, "key_0": key_0, "key_1": key_1, "data": data, "tag": data[8]})
+        if not isinstance(data, bytes) or len(data) < 10:
+            raise ValueError(f"MOD1 source row {source_row_id} has no little-endian u16 tag at offsets 8..9")
+        result.append({"source_row_id": source_row_id, "key_0": key_0, "key_1": key_1, "data": data, "tag": int.from_bytes(data[8:10], "little")})
     return result
 
 
@@ -131,7 +131,7 @@ def analyze(rows: list[dict[str, Any]], calls: dict[int, list[dict[str, Any]]]) 
         known = KNOWN.get(tag)
         score = len(group) + 100 * sum(any(word in name for word in PRIORITY_WORDS) for name in functions)
         catalog.append({
-            "tag": f"0x{tag:02X}", "tag_decimal": tag,
+            "tag": f"0x{tag:04X}", "tag_decimal": tag,
             "status": "interpreted" if known else "unresolved",
             "name": known[0] if known else None,
             "confidence": known[1] if known else "unknown",
@@ -139,7 +139,7 @@ def analyze(rows: list[dict[str, Any]], calls: dict[int, list[dict[str, Any]]]) 
             "record_count": len(group), "distinct_key_0": len({r['key_0'] for r in group}),
             "record_lengths": {str(k): v for k, v in sorted(lengths.items())},
             "entity_key_associations": dict(sorted(associations.items())),
-            "top_cooccurring_tags": [{"tag":f"0x{k:02X}","shared_keys":v} for k,v in cooccurrence.most_common(8)],
+            "top_cooccurring_tags": [{"tag":f"0x{k:04X}","shared_keys":v} for k,v in cooccurrence.most_common(8)],
             "variable_offsets": [i for i, count in enumerate(unique_by_offset) if count > 1],
             "unique_values_by_offset": unique_by_offset,
             "dll_calls": calls.get(tag, []),
@@ -157,7 +157,7 @@ def build_report(baseline: Path, dll: Path) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "sources": {"baseline":{"path":str(baseline.resolve()),"sha256":sha256_file(baseline)}, "decompiled_dll":{"path":str(dll.resolve()),"sha256":sha256_file(dll)}},
-        "method": ["MOD1 tag byte at offset 8", "same-key entity anchor and co-occurrence analysis", "per-offset byte variability", "decompiled _ACQUIRE_MODIFICATION call-site correlation"],
+        "method": ["MOD1 little-endian u16 tag at offsets 8..9", "same-key entity anchor and co-occurrence analysis", "per-offset byte variability", "decompiled _ACQUIRE_MODIFICATION call-site correlation"],
         "counts": {"records":len(rows), "tags":len(catalog), "interpreted":sum(x["status"]=="interpreted" for x in catalog), "unresolved":len(unresolved)},
         "ranked_unresolved_tags": [x["tag"] for x in unresolved],
         "catalog": catalog,

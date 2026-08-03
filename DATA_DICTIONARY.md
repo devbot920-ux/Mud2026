@@ -65,7 +65,7 @@ These meanings are supported by decompiled `_ACQUIRE_MODIFICATION` consumers and
 | `0xE4` | Limited shop stock | Strong | `LIMITED_AVAILABLE`, `PC_BUYITEM`, shop stock |
 | `0xEE`–`0xF0` | Conditional combat modifiers | Strong | bane to-hit/AC/defense-pool and damage multiplier |
 
-Only tag values present in the snapshot appear in the generated catalog; absent members of a DLL-observed range remain hypotheses rather than invented records. The detailed ignored report records evidence and confidence for all 113 present tags, including 72 with no assigned semantic name.
+Only tag values present in the snapshot appear in the generated catalog; absent members of a DLL-observed range remain hypotheses rather than invented records. The detailed ignored report records evidence and confidence for all 118 present tags, including 77 with no assigned semantic name.
 
 ## Existing derived graph
 
@@ -105,11 +105,11 @@ Generated privately at `var/baseline/rose-baseline.sqlite` from the tracked `sch
 | DES1 descriptions | 4,398 | 4,397 | Strong ID / tentative text decoding |
 | Rooms | 3,446 | 3,446 | Strong ID / tentative fields |
 | Doors | 78 | 78 | Strong ID / tentative topology |
-| Item-base records | 549 | 529 | Strong ID / tentative categories |
+| Item-base records | 529 | 529 | Strong ID / tentative categories |
 | NPCs | 211 | 211 | Strong ID / tentative descriptions |
-| Spawn records | 387 | 387 | Strong ID / tentative entries |
+| Spawn records | 333 | 333 | Strong ID / tentative entries |
 | Source-decoded topology edges | 7,097 | 7,097 semantic tuples | Tentative decoding |
-| MOD1 tag values cataloged | 113 | 113 | Confirmed at assumed offset 8 |
+| MOD1 tag values cataloged | 118 | 118 | Confirmed little-endian `u16` at offsets 8–9 |
 
 The baseline reproduces every published graph node and edge while retaining 20 additional source-decoded edges. Nineteen collide with another edge from the same room/direction in the legacy builder; one shares endpoints with another direction and was collapsed by a simple directed graph representation.
 

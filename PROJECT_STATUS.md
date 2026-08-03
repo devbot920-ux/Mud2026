@@ -1,14 +1,14 @@
 # Project Status
 
-Updated: 2026-08-02
+Updated: 2026-08-03
 Branch: `dev`
-Milestone: Phase 4 — Pendelhaven fixture and export contract complete
+Milestone: Phase 5 — corrected Pendelhaven engine prototypes in progress
 
 ## Current state
 
 The repository foundation and provenance policy are established. The game engine remains intentionally undecided while the source data is recovered into an engine-neutral model.
 
-Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 113 MOD1 tags. Phase 4 defines an engine-neutral versioned JSON contract and closes the 60-room Pendelhaven fixture over topology, spawns, referenced entities, and modifiers.
+Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 118 MOD1 tags. Phase 4 defines an engine-neutral versioned JSON contract and closes the 60-room Pendelhaven fixture over topology, spawns, referenced entities, and modifiers. A 2026-08-03 correction promoted the MOD1 tag from one byte to little-endian `u16`, separating several previously collapsed high tags before Phase 5 client work.
 
 Known source evidence:
 
@@ -21,7 +21,7 @@ Initial read-only analysis found:
 
 - 3,446 unique rooms and 7,077 directed connections
 - 22 derived/named regions
-- 529 item keys represented by 549 base-item records
+- 529 item keys represented by exactly 529 base-item records
 - 211 NPC identities
 - 4,398 DES1 description records
 - More than 100 MOD1 record-tag values, most not yet semantically decoded
@@ -52,7 +52,7 @@ Initial read-only analysis found:
 - Canonical raw-provenance schema at `schema/baseline.sql`
 - Read-only, atomic, deterministic importer at `scripts/baseline_import.py`
 - Complete preservation of SQLite schema objects, rows, storage classes, values, BLOBs, and hashes
-- Catalog of all 113 MOD1 tag values without discarding unknown records
+- Catalog of all 118 MOD1 tag values without discarding unknown records
 - Provisional DES1 plus known MOD1 room, door, item, NPC, spawn, trainer, promotion, spell-count, quest, and feature decoding with offsets/confidence
 - Semantic topology reconciliation reproducing all 3,446 published rooms and all 7,077 published edges
 - Preservation and explanation of 20 additional source-decoded edges omitted by the lossy graph builder
@@ -60,7 +60,7 @@ Initial read-only analysis found:
 ## Phase 3 deliverables
 
 - Deterministic standard-library MOD1 evidence analyzer at `scripts/analyze_mod1_tags.py`
-- Complete 113-tag evidence ledger and ranked 72-tag unresolved queue
+- Complete 118-tag evidence ledger and ranked 77-tag unresolved queue
 - Same-key room, door, NPC, and item association plus tag co-occurrence analysis
 - Per-offset byte-variability profiles without publishing source descriptions
 - Decompiled `_ACQUIRE_MODIFICATION` correlation with function and line provenance
@@ -107,8 +107,8 @@ Phase 1 verification completed on 2026-08-02:
 - Canonical baseline contains 9,069 decoded entities, 26,441 decoded fields, and 7,097 topology edges
 - `PRAGMA integrity_check` — `ok`; `PRAGMA foreign_key_check` — zero violations
 - Source-file hash comparison — zero mismatches
-- Repeated baseline SHA-256 — `4AD060F062E6C052366B5BABCB1C3A95D6B6223D9CDE630EEF234D0E3CD82C8A`
-- Semantic digest — `40D6E03DB1F44C70C848C5920D1D0BC9CC3FB7AEB0BC0839621565D21DA2A3EA`
+- Corrected baseline SHA-256 — `8FCACE1AA6936C0FAA487F3B0153B3EC82C707CB7D10B4E209050EFAE3C916ED`
+- Corrected semantic digest — `75A631DA62158CECD3CF692AF9709712F3C47546211C9CDD923E5FE61CE69330`
 - Reconciliation — zero missing/extra nodes, zero missing published edges, 20 additional source-decoded edges
 
 Canonical Phase 2 verification completed on 2026-08-02:
@@ -124,8 +124,8 @@ Canonical Phase 2 verification completed on 2026-08-02:
 Phase 3 verification completed on 2026-08-02:
 
 - `python -m unittest discover -s tests -v` — 30 tests passed
-- `python scripts/analyze_mod1_tags.py` — 7,060 records, 113 tags, 41 interpreted/hypothesized, 72 unresolved
-- Repeated detailed-report SHA-256 — `B163C8C94FB6E867A82C6580D648FEB31416A880002AD9F73B664B4CA3CCB54B`
+- `python scripts/analyze_mod1_tags.py` — 7,060 records, 118 tags, 41 interpreted/hypothesized, 77 unresolved
+- Corrected detailed-report SHA-256 — `82650E575D9BE827FFBBDB029DDB95079886C3B5681A49720269017103CD1A02`
 - All source databases and the decompiled DLL were opened read-only
 - Detailed evidence report includes no source description text
 
@@ -133,7 +133,7 @@ Phase 4 verification completed on 2026-08-02:
 
 - `python -m unittest discover -s tests -v` — 36 tests passed
 - `python scripts/export_golden_fixture.py` — 60 primary rooms, 3 stubs, 130 edges, 2 doors, 19 spawns, 18 NPCs, 12 items, 70 modifiers
-- Repeated export SHA-256 — `A4BF7E336F70E55DAE3157A50521BC98E28861EEEA1078B576F956939A6F34D9`
+- Corrected export SHA-256 — `146D19341A7172EFA604E7E32D9277A9E86750ADE26D5637CFDA1EDBBDDE2DA4`
 - Referential integrity — zero dangling room-edge, NPC-spawn, or item-spawn references
 - All source databases and the canonical baseline remained read-only
 - `git diff --check` — passed before commit

@@ -34,7 +34,7 @@ All NPC and item spawn references resolve. The 70 modifiers comprise every non-b
 - Spawns reference typed NPC/item entities; unknown entry types remain representable.
 - Display region and coordinates are explicitly classified as derived.
 - Unknown modifier tags and bytes are preserved without assigning invented meanings.
-- The contract permits repeated item IDs because the full source contains 549 base rows for 529 item keys.
+- Item identities are unique: the corrected little-endian `u16` MOD1 tag distinguishes 529 true `0x0032` item bases from 20 unrelated `0x0432` modifiers.
 
 ## Commands
 

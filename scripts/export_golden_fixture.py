@@ -95,16 +95,17 @@ def get_mod1_rows(connection: sqlite3.Connection, owner_keys: set[int]) -> list[
     result = []
     for row in rows:
         data = row["data"]
-        if not isinstance(data, bytes) or len(data) <= 8:
+        if not isinstance(data, bytes) or len(data) < 10:
             tag, known = None, None
         else:
-            tag, known = data[8], KNOWN.get(data[8])
+            tag = int.from_bytes(data[8:10], "little")
+            known = KNOWN.get(tag)
         if tag in BASE_ENTITY_TAGS:
             continue
         provenance = source_provenance(connection, row["source_row_id"])
-        provenance.update(byte_offset=8, byte_width=1, rule="MOD1 tag byte; complete raw record retained")
+        provenance.update(byte_offset=8, byte_width=2, rule="MOD1 little-endian u16 tag; complete raw record retained")
         result.append({"source_row_id": row["source_row_id"], "owner_key": row["owner_key"],
-                       "tag": f"0x{tag:02X}" if tag is not None else "unknown",
+                       "tag": f"0x{tag:04X}" if tag is not None else "unknown",
                        "name": known[0] if known else None, "confidence": known[1] if known else "unknown",
                        "raw_data_base64": base64.b64encode(data or b"").decode("ascii"), "provenance": provenance})
     return result

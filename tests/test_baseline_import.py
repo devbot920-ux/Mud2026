@@ -22,7 +22,7 @@ def make_source(path: Path, rows, with_extra=False):
 
 
 def mod_blob(obj_id, tag, short=b"sample", links=()):
-    blob = bytearray(224); blob[:4] = obj_id.to_bytes(4, "little"); blob[8] = tag
+    blob = bytearray(224); blob[:4] = obj_id.to_bytes(4, "little"); blob[8:10] = tag.to_bytes(2, "little")
     blob[70:70 + len(short)] = short
     for slot, (ordinal, target) in enumerate(links):
         blob[170 + slot] = ordinal; blob[30 + slot * 4:34 + slot * 4] = target.to_bytes(4, "little")
@@ -32,7 +32,7 @@ def mod_blob(obj_id, tag, short=b"sample", links=()):
 def modifier_blob(obj_id, tag, size=224, values=()):
     blob=bytearray(size)
     if size>=4: blob[:4]=obj_id.to_bytes(4,"little")
-    if size>8: blob[8]=tag
+    if size>=10: blob[8:10]=tag.to_bytes(2,"little")
     for offset,value in values:
         if isinstance(value,bytes): blob[offset:offset+len(value)]=value
         else: blob[offset]=value
@@ -57,7 +57,8 @@ class BaselineImportTests(unittest.TestCase):
                 (9, modifier_blob(1,0xC5,values=((70,b"Find\0the rose\0"),)), 1, 90),
                 (10, mod_blob(50,0x32), 50, 100), (11, modifier_blob(50,0x33), 50, 110),
                 (12, modifier_blob(2,0x48,size=9), 2, 120),
-                (13, modifier_blob(2,0x85,size=71,values=((70,255),)), 2, 130)]
+                (13, modifier_blob(2,0x85,size=71,values=((70,255),)), 2, 130),
+                (14, modifier_blob(50,0x0432), 50, 140)]
         make_source(mod, rows, with_extra=True)
         make_source(des, [(1, (1).to_bytes(4,"little") + b"\0Long text\0ignored", 1, 1)])
         return [des, mod]
@@ -80,8 +81,9 @@ class BaselineImportTests(unittest.TestCase):
         paths=self.sources(); out=self.root/"out.sqlite"; result=bi.import_all(paths,out)
         con=sqlite3.connect(out)
         self.assertEqual(con.execute("SELECT record_count FROM mod1_tag_catalog WHERE tag=254").fetchone()[0],1)
-        self.assertEqual(con.execute("SELECT record_count FROM mod1_tag_catalog WHERE tag IS NULL").fetchone()[0],1)
-        self.assertEqual(result["truncated_mod1_records"],1)
+        self.assertEqual(con.execute("SELECT record_count FROM mod1_tag_catalog WHERE tag=1074").fetchone()[0],1)
+        self.assertEqual(con.execute("SELECT record_count FROM mod1_tag_catalog WHERE tag IS NULL").fetchone()[0],2)
+        self.assertEqual(result["truncated_mod1_records"],2)
         con.close()
 
     def test_known_decode_has_offsets_confidence_and_topology(self):
@@ -103,7 +105,7 @@ class BaselineImportTests(unittest.TestCase):
         self.assertEqual((fields['attribute_code'][1],fields['attribute_code'][2:5]),('2',(70,1,'tentative')))
         self.assertEqual(fields['attribute_name'][1],'"dexterity"')
         self.assertEqual(fields['skill_code'][1],'250'); self.assertEqual(fields['skill_name'][1],'null')
-        self.assertEqual(fields['promotion_max'][2:4],(10,1)); self.assertEqual(fields['spells_count'][2:4],(220,1))
+        self.assertEqual(fields['promotion_max'][2:4],(10,2)); self.assertEqual(fields['spells_count'][2:4],(220,1))
         self.assertEqual(fields['quest_text'][1],'"Find ... the rose"')
         self.assertIn('"id":5',fields['attribute_code'][5]); self.assertIn('"id":6',fields['skill_code'][5])
         self.assertIn('"id":7',fields['promotion_max'][5]); self.assertIn('"id":8',fields['spells_count'][5]); self.assertIn('"id":9',fields['quest_text'][5])
@@ -117,6 +119,7 @@ class BaselineImportTests(unittest.TestCase):
           JOIN decoded_entity e USING(decoded_entity_id) JOIN source_row r ON r.source_row_id=f.source_row_id
           WHERE e.stable_id='item:50' AND f.field_name='category_weapon'""").fetchone()
         self.assertEqual(category[:2],(8,'tentative')); self.assertIn('"id":11',category[2])
+        self.assertEqual(con.execute("SELECT count(*) FROM decoded_entity WHERE entity_type='item' AND stable_id='item:50'").fetchone()[0],1)
         con.close()
 
     def test_output_is_byte_deterministic_and_idempotent(self):

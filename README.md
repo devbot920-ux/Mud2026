@@ -6,7 +6,7 @@ The project is deliberately engine-neutral during data discovery. Godot, Unity, 
 
 ## Current stage
 
-Phases 0–4 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, Phase 3 catalogs all 113 MOD1 tags, and Phase 4 exports a closed Pendelhaven fixture through a versioned engine-neutral contract. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff and [docs/GOLDEN_FIXTURE_EXPORT.md](docs/GOLDEN_FIXTURE_EXPORT.md) for Phase 4.
+Phases 0–4 are complete. Phase 1 provides a reproducible raw-provenance baseline, Phase 2 audits all 7,097 canonical edges, Phase 3 catalogs all 118 MOD1 tags, and Phase 4 exports a closed Pendelhaven fixture through a versioned engine-neutral contract. See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current handoff and [docs/GOLDEN_FIXTURE_EXPORT.md](docs/GOLDEN_FIXTURE_EXPORT.md) for Phase 4.
 
 ## Safety and data ownership
 

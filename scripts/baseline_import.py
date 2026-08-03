@@ -16,6 +16,7 @@ DIRECTIONS = ("N","S","E","W","NW","NE","SE","SW","U","D")
 NO_TARGET = {0, 0x7fffffff, 0xffffffff}
 KNOWN_TAGS = {0x0A:"room",0x0D:"door",0x28:"npc",0x30:"spawn",0x32:"item"}
 TAG_OFFSET = 8
+TAG_WIDTH = 2
 ATTR_MAP = {0:"strength",1:"wisdom",2:"dexterity",3:"constitution",4:"intelligence",5:"charisma",6:"comeliness",7:"perception"}
 SKILL_MAP = {
     0:"melee",1:"empty hand combat",2:"BOWMAN",3:"ARMOR",4:"DODGE",5:"MAGDEFEN",
@@ -73,6 +74,9 @@ def decode_quest_text(raw: bytes) -> str:
 def u32(blob: bytes, off: int) -> int|None:
     return struct.unpack_from("<I",blob,off)[0] if len(blob)>=off+4 else None
 
+def u16(blob: bytes, off: int) -> int|None:
+    return struct.unpack_from("<H",blob,off)[0] if len(blob)>=off+2 else None
+
 def parse_links(blob: bytes) -> list[tuple[str,int,int,int]]:
     """Return direction,target,ordinal-byte-offset,target-byte-offset.
 
@@ -125,8 +129,9 @@ def import_all(paths:list[Path], output:Path) -> dict[str,Any]:
               if table=="data_t" and "data" in names and isinstance(row["data"],bytes):
                 blob=row["data"]
                 if path.stem=="RCI_MOD1":
-                  if len(blob)<=TAG_OFFSET: tag_counts[None]+=1; truncated+=1
-                  else: tag_counts[blob[TAG_OFFSET]]+=1
+                  tag=u16(blob,TAG_OFFSET)
+                  if tag is None: tag_counts[None]+=1; truncated+=1
+                  else: tag_counts[tag]+=1
                   mod_rows.append((rid,row["key_0"] if "key_0" in names else None,blob))
                 elif path.stem=="RCI_DES1":
                   did=u32(blob,0)
@@ -141,16 +146,19 @@ def import_all(paths:list[Path], output:Path) -> dict[str,Any]:
         add_field(dst,eid,rid,"text",text,4,None,"NUL-trimmed CP437 after leading NUL bytes","tentative")
       known_ids={0x32:set(),0x28:set()}
       for rid,key,blob in mod_rows:
-        if len(blob)>8 and blob[8] in known_ids and (v:=u32(blob,0)) is not None: known_ids[blob[8]].add(v)
+        tag=u16(blob,TAG_OFFSET)
+        if tag in known_ids and (v:=u32(blob,0)) is not None: known_ids[tag].add(v)
       hidden_by_key=defaultdict(dict); tags_by_key=defaultdict(list); mod_blob_by_rid={}
       for rid,key,blob in mod_rows:
-        if len(blob)>8:
+        tag=u16(blob,TAG_OFFSET)
+        if tag is not None:
           mod_blob_by_rid[rid]=blob
-          tags_by_key[key].append((rid,blob[8]))
-          if 0xA6<=blob[8]<=0xAF: hidden_by_key[key][DIRECTIONS[blob[8]-0xA6]]=rid
+          tags_by_key[key].append((rid,tag))
+          if 0xA6<=tag<=0xAF: hidden_by_key[key][DIRECTIONS[tag-0xA6]]=rid
       for rid,key,blob in mod_rows:
-        if len(blob)<=8: continue
-        tag=blob[8]; et=KNOWN_TAGS.get(tag)
+        tag=u16(blob,TAG_OFFSET)
+        if tag is None: continue
+        et=KNOWN_TAGS.get(tag)
         if not et: continue
         obj=u32(blob,0)
         if obj is None: continue
@@ -166,12 +174,12 @@ def import_all(paths:list[Path], output:Path) -> dict[str,Any]:
             matches=[rr for rr,t in related if t==cat_tag]
             for match_index,modifier_rid in enumerate(matches,1):
               suffix="" if match_index==1 else f"_{match_index}"
-              add_field(dst,eid,modifier_rid,f"category_{cat_name}{suffix}",True,8,1,f"presence of MOD1 modifier tag 0x{cat_tag:02X} sharing key_0","tentative")
+              add_field(dst,eid,modifier_rid,f"category_{cat_name}{suffix}",True,TAG_OFFSET,TAG_WIDTH,f"presence of MOD1 modifier tag 0x{cat_tag:04X} sharing key_0","tentative")
         if et=="room":
           flag_tags={0x37:"store",0x6D:"peaceful",0x6E:"spell_trainer",0x72:"tavern",0xC5:"quest",0xE0:"trap"}
           for flag_tag,flag_name in flag_tags.items():
             matches=[rr for rr,t in related if t==flag_tag]
-            if matches: add_field(dst,eid,matches[0],f"is_{flag_name}",True,8,1,f"presence of MOD1 tag 0x{flag_tag:02X} sharing key_0","tentative")
+            if matches: add_field(dst,eid,matches[0],f"is_{flag_name}",True,TAG_OFFSET,TAG_WIDTH,f"presence of MOD1 tag 0x{flag_tag:04X} sharing key_0","tentative")
           for modifier_rid,modifier_tag in related:
             modifier_blob=mod_blob_by_rid[modifier_rid]
             if modifier_tag in (0x85,0x48):
@@ -182,8 +190,8 @@ def import_all(paths:list[Path], output:Path) -> dict[str,Any]:
                 add_field(dst,eid,modifier_rid,f"{prefix}_name",code_map.get(code),70,1,f"legacy {prefix} code map lookup; null means unknown code","tentative")
               if len(modifier_blob)>71: add_field(dst,eid,modifier_rid,f"{prefix}_max",modifier_blob[71],71,1,"unsigned byte","tentative")
               if len(modifier_blob)>72: add_field(dst,eid,modifier_rid,f"{prefix}_min",modifier_blob[72],72,1,"unsigned byte","tentative")
-            elif modifier_tag==0x75 and len(modifier_blob)>10:
-              add_field(dst,eid,modifier_rid,"promotion_max",modifier_blob[10],10,1,"unsigned byte","tentative")
+            elif modifier_tag==0x75 and (promotion_max:=u16(modifier_blob,10)) is not None:
+              add_field(dst,eid,modifier_rid,"promotion_max",promotion_max,10,2,"little-endian u16","strong")
             elif modifier_tag==0x6E and len(modifier_blob)>220:
               add_field(dst,eid,modifier_rid,"spells_count",modifier_blob[220],220,1,"unsigned byte","tentative")
             elif modifier_tag==0xC5 and len(modifier_blob)>70:
@@ -203,18 +211,18 @@ def import_all(paths:list[Path], output:Path) -> dict[str,Any]:
             if qty is not None: add_field(dst,eid,rid,f"spawn_{i+1}_count",qty,70+i,1,"unsigned byte","tentative")
             add_field(dst,eid,rid,f"spawn_{i+1}_type",typ,10+i*2,2,"membership in decoded NPC/item id sets","tentative")
       for tag,count in sorted(tag_counts.items(),key=lambda x:(x[0] is None,x[0] or 0)):
-        dst.execute("INSERT INTO mod1_tag_catalog VALUES(?,?,?,?,?)",(tag,(f"0x{tag:02X}" if tag is not None else None),count,(count if tag is None else 0),TAG_OFFSET))
+        dst.execute("INSERT INTO mod1_tag_catalog VALUES(?,?,?,?,?)",(tag,(f"0x{tag:04X}" if tag is not None else None),count,(count if tag is None else 0),TAG_OFFSET))
       # Deterministic semantic digest excludes database page representation and itself.
       digest=hashlib.sha256()
       for table in ("source_file","schema_object","source_row","source_value","decoded_entity","decoded_field","topology_edge","mod1_tag_catalog"):
         for row in dst.execute(f"SELECT * FROM {table} ORDER BY rowid"):
           digest.update(canonical_value(table)[1]); [digest.update(canonical_value(v)[1]) for v in row]
       semantic=digest.hexdigest()
-      dst.execute("INSERT INTO import_run VALUES(1,1,?,?,?,?)",(semantic,len(paths),totals["rows"],totals["values"]))
+      dst.execute("INSERT INTO import_run VALUES(1,2,?,?,?,?)",(semantic,len(paths),totals["rows"],totals["values"]))
       dst.commit(); ok=dst.execute("PRAGMA integrity_check").fetchone()[0];
       if ok!="ok": raise RuntimeError(ok)
       dst.execute("VACUUM"); dst.close(); os.replace(tmp,output)
-      catalog=[{"tag":tag,"tag_hex":(f"0x{tag:02X}" if tag is not None else None),"record_count":count,"truncated_count":(count if tag is None else 0)} for tag,count in sorted(tag_counts.items(),key=lambda x:(x[0] is None,x[0] or 0))]
+      catalog=[{"tag":tag,"tag_hex":(f"0x{tag:04X}" if tag is not None else None),"record_count":count,"truncated_count":(count if tag is None else 0)} for tag,count in sorted(tag_counts.items(),key=lambda x:(x[0] is None,x[0] or 0))]
       return {"source_count":len(paths),"row_count":totals["rows"],"value_count":totals["values"],"mod1_tag_offset":TAG_OFFSET,"mod1_tag_count":len(tag_counts),"truncated_mod1_records":truncated,"mod1_tag_catalog":catalog,"semantic_sha256":semantic,"output_sha256":sha256_file(output)}
     except Exception:
       try: dst.close()

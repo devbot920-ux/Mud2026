@@ -23,9 +23,9 @@ class Mod1TagAnalysisTests(unittest.TestCase):
           CREATE TABLE source_value(source_row_id INTEGER, column_name TEXT, integer_value INTEGER, blob_value BLOB);
           INSERT INTO source_file VALUES(1,'RCI_MOD1');
           INSERT INTO source_row VALUES(1,1,'data_t'),(2,1,'data_t'),(3,1,'data_t');
-          INSERT INTO source_value VALUES(1,'key_0',7,NULL),(1,'key_1',1,NULL),(1,'data',NULL,X'00000000000000000A01');
-          INSERT INTO source_value VALUES(2,'key_0',7,NULL),(2,'key_1',2,NULL),(2,'data',NULL,X'0000000000000000E401');
-          INSERT INTO source_value VALUES(3,'key_0',8,NULL),(3,'key_1',1,NULL),(3,'data',NULL,X'0000000000000000E402');
+          INSERT INTO source_value VALUES(1,'key_0',7,NULL),(1,'key_1',1,NULL),(1,'data',NULL,X'00000000000000000A0000');
+          INSERT INTO source_value VALUES(2,'key_0',7,NULL),(2,'key_1',2,NULL),(2,'data',NULL,X'0000000000000000E40001');
+          INSERT INTO source_value VALUES(3,'key_0',8,NULL),(3,'key_1',1,NULL),(3,'data',NULL,X'0000000000000000E40002');
         """)
         c.commit(); c.close()
         return path
@@ -34,10 +34,10 @@ class Mod1TagAnalysisTests(unittest.TestCase):
         path = self.baseline(); before = path.stat().st_mtime_ns
         rows = read_mod1(path)
         catalog = analyze(rows, {})
-        limited = next(x for x in catalog if x["tag"] == "0xE4")
+        limited = next(x for x in catalog if x["tag"] == "0x00E4")
         self.assertEqual(limited["record_count"], 2)
         self.assertEqual(limited["entity_key_associations"], {"room": 1, "unanchored": 1})
-        self.assertEqual(limited["variable_offsets"], [9])
+        self.assertEqual(limited["variable_offsets"], [10])
         self.assertEqual(path.stat().st_mtime_ns, before)
 
     def test_dll_parser_tracks_real_function_and_line(self):

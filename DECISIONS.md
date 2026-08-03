@@ -84,6 +84,13 @@ Connectivity, reachability, and asymmetry decisions will use all 7,097 Phase 1 t
 
 Calls to `_ACQUIRE_MODIFICATION(object, tag)` provide strong evidence that a numeric MOD1 tag participates in the surrounding gameplay function. A specific consumer can support a tag-family name, but decompiled names and control flow do not by themselves establish every field's meaning. Phase 3 therefore records function and line provenance, preserves byte variability, and leaves fields or tags unresolved unless corroborated.
 
+## D-013 — MOD1 tags are little-endian 16-bit values
+
+- Date: 2026-08-03
+- Status: Accepted
+
+Decode the MOD1 modification tag as a little-endian `u16` at raw offsets 8–9. The previous one-byte interpretation collapsed distinct high tags into low-byte families, including `0x0432` into item tag `0x0032` and `0x0430` into spawn tag `0x0030`. All catalogs, entity selection, fixture modifiers, provenance widths, and DLL correlations must retain the full 16-bit value. The corrected snapshot has 118 tags, 529 item bases, and 333 spawn records.
+
 ## D-013 — Bound the golden fixture by derived Pendelhaven membership plus one-hop stubs
 
 - Date: 2026-08-02
