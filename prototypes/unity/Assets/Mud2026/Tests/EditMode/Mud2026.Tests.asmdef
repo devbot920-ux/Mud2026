@@ -1,0 +1,8 @@
+{
+  "name": "Mud2026.Tests",
+  "rootNamespace": "Mud2026.UnityPrototype.Tests",
+  "references": ["Mud2026.Runtime", "Unity.Newtonsoft.Json"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false
+}

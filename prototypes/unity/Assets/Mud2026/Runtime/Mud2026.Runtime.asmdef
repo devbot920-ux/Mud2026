@@ -1,0 +1,6 @@
+{
+  "name": "Mud2026.Runtime",
+  "rootNamespace": "Mud2026.UnityPrototype",
+  "references": ["Unity.Newtonsoft.Json"],
+  "autoReferenced": true
+}
