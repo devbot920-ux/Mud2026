@@ -9,9 +9,14 @@ h1 { margin: 5px 0 8px; color: #f1d99a; font-size: 23px; }
 #exits { margin-top: 10px; color: #a9c7c2; font-family: ui-monospace, monospace; }
 #developer { position: fixed; right: 20px; top: 20px; width: 310px; white-space: pre-wrap; padding: 13px; background: #050809e6; border: 1px solid #3f7770; color: #8cd0c5; font: 12px/1.45 ui-monospace, monospace; }
 #reticle { position: fixed; left: 50%; top: 50%; color: #fff9; font: 22px monospace; transform: translate(-50%,-50%); }
+#interaction-prompt { position: fixed; left: 50%; top: calc(50% + 32px); transform: translateX(-50%); padding: 7px 12px; color: #fff2c5; background: #111c; border: 1px solid #b79855; font: 13px ui-monospace, monospace; }
+#interaction-panel { position: fixed; right: 20px; bottom: 96px; width: min(440px, calc(100vw - 40px)); max-height: 42vh; overflow: auto; padding: 16px 18px; color: #ddd5bf; background: #11100eeb; border: 1px solid #997b43; box-shadow: 0 12px 35px #000b; white-space: pre-line; }
+#interaction-panel h2 { margin: 0 0 8px; color: #f1d99a; font-size: 18px; }
+#interaction-text { line-height: 1.55; }
+#tutorial { position: fixed; left: 24px; top: 255px; width: 270px; padding: 12px 15px; color: #d9d3c1; background: #090d0ee6; border: 1px solid #496b66; font: 12px/1.65 ui-monospace, monospace; white-space: pre-line; }
 #help { position: fixed; bottom: 57px; left: 50%; transform: translateX(-50%); color: #ddd; background: #000a; padding: 5px 10px; font: 12px Arial; }
 #command-form { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); width: min(620px, calc(100vw - 40px)); display: flex; gap: 8px; padding: 9px 12px; background: #080a0ded; border: 1px solid #75623c; font-family: ui-monospace, monospace; }
 #command { flex: 1; border: 0; outline: 0; color: #f0dfae; background: transparent; font: inherit; }
 #command-form button { border: 1px solid #75623c; color: #f0dfae; background: #272015; font: inherit; cursor: pointer; }
 #error { position: fixed; inset: 20% 15%; padding: 24px; background: #250d0ded; border: 1px solid #d86a5c; color: #ffd2ca; white-space: pre-wrap; }
-@media(max-width: 850px) { #developer { top:auto; bottom: 95px; right: 12px; width: 260px; } #room-panel { left: 12px; top: 12px; width: calc(100vw - 24px); } }
+@media(max-width: 850px) { #developer { top:auto; bottom: 95px; right: 12px; width: 260px; } #room-panel { left: 12px; top: 12px; width: calc(100vw - 24px); } #tutorial { left:12px; top:auto; bottom:95px; } #interaction-panel { right:12px; } }

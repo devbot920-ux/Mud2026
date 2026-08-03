@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import "./style.css";
 import { commandDirection, edgesFrom, field, travel, validateWorld, type Edge, type Entity, type Room, type World } from "./model";
+import { INITIAL_ROOM_ID, constrainInitialRoomMovement, findInitialRoomTarget, initialRoomCommand, type InitialRoomAction, type InitialRoomTarget } from "./room3976";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -12,13 +13,18 @@ const scene = new THREE.Scene(); scene.background = new THREE.Color(0x07090b); s
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 80); camera.rotation.order = "YXZ";
 const chamber = new THREE.Group(); scene.add(chamber);
 const modelLoader = new GLTFLoader();
+const loadedModels = new Set<string>();
 scene.add(new THREE.HemisphereLight(0x8ba7b5, 0x251a0e, 1.6));
 const torch = new THREE.PointLight(0xffb45c, 40, 24); torch.position.set(0, 3.2, 0); torch.castShadow = true; scene.add(torch);
 
-let world: World; let currentRoomId = 3976; let showHidden = false; let developerVisible = true;
+let world: World; let currentRoomId = INITIAL_ROOM_ID; let showHidden = false; let developerVisible = false;
 let yaw = 0, pitch = 0, roomGeneration = 0; const keys = new Set<string>(); const exitTriggers: { edge: Edge; position: THREE.Vector3 }[] = [];
 const title = document.querySelector<HTMLElement>("#title")!; const description = document.querySelector<HTMLElement>("#description")!;
 const exitsElement = document.querySelector<HTMLElement>("#exits")!; const developer = document.querySelector<HTMLElement>("#developer")!;
+const interactionPrompt = document.querySelector<HTMLElement>("#interaction-prompt")!; const interactionPanel = document.querySelector<HTMLElement>("#interaction-panel")!;
+const interactionTitle = document.querySelector<HTMLElement>("#interaction-title")!; const interactionText = document.querySelector<HTMLElement>("#interaction-text")!;
+const tutorial = document.querySelector<HTMLElement>("#tutorial")!; const tutorialProgress = new Set<"look"|"old-man"|"parchment"|"west">();
+let activeTarget: InitialRoomTarget | undefined;
 
 const positions: Record<string, THREE.Vector3> = {
   N: new THREE.Vector3(0,0,-8), NE:new THREE.Vector3(5.65,0,-5.65), E:new THREE.Vector3(8,0,0), SE:new THREE.Vector3(5.65,0,5.65),
@@ -35,6 +41,7 @@ async function addModel(path: string, generation: number, configure?: (model: TH
     gltf.scene.traverse(object => { if (object instanceof THREE.Mesh) object.castShadow = object.receiveShadow = true; });
     configure?.(gltf.scene);
     chamber.add(gltf.scene);
+    loadedModels.add(path);
   } catch (error) {
     console.warn(`Unable to load ${path}; keeping the procedural marker.`, error);
   }
@@ -61,6 +68,48 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
 
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
 
+function entity(id: number): Entity | undefined { return [...world.npcs,...world.items].find(candidate=>candidate.id===id); }
+function showInteraction(heading: string, text: string) { interactionTitle.textContent=heading; interactionText.textContent=text.replace(/\r/g,"\n"); interactionPanel.hidden=false; }
+function renderTutorial() {
+  tutorial.hidden=currentRoomId!==INITIAL_ROOM_ID;
+  if(tutorial.hidden)return;
+  const step=(done:boolean,text:string)=>`${done?"✓":"○"} ${text}`;
+  tutorial.textContent=["PASSAGES OF LEARNING",step(tutorialProgress.has("look"),"Type LOOK"),step(tutorialProgress.has("old-man"),"Examine or talk to the old man"),step(tutorialProgress.has("parchment"),"Read the old parchment"),step(tutorialProgress.has("west"),"Leave through the west passage")].join("\n");
+}
+function performInitialRoomAction(action: InitialRoomAction) {
+  const room=world.rooms.find(candidate=>candidate.id===INITIAL_ROOM_ID)!; const oldMan=entity(3993); const parchment=entity(3985);
+  if(action==="look-room") { tutorialProgress.add("look"); showInteraction(field(room,"short_description","The training room"),field(room,"long_description","You look around.")); }
+  else if(action==="inspect-old-man") { tutorialProgress.add("old-man"); showInteraction(field(oldMan!,"short_description","old man"),field(oldMan!,"long_description","The old man points toward the parchment.")); }
+  else if(action==="talk-old-man") { tutorialProgress.add("old-man"); showInteraction("The old man gestures",field(oldMan!,"long_description","The old man points toward the parchment.")); }
+  else if(action==="read-parchment") { tutorialProgress.add("parchment"); showInteraction(field(parchment!,"short_description","old parchment"),field(parchment!,"long_description","The parchment describes movement commands.")); }
+  else showInteraction("old parchment","The parchment is firmly tacked to the wall. You cannot take it, but you can READ it.");
+  renderTutorial();
+}
+function interactNearby() {
+  const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));
+  const target=findInitialRoomTarget({x:camera.position.x,z:camera.position.z},{x:forward.x,z:forward.z});
+  if(target==="old-man")performInitialRoomAction("inspect-old-man");
+  else if(target==="parchment")performInitialRoomAction("read-parchment");
+  else renderUi("Nothing is close enough to interact with.");
+}
+function updateInteractionPrompt(forward: THREE.Vector3) {
+  const target=currentRoomId===INITIAL_ROOM_ID?findInitialRoomTarget({x:camera.position.x,z:camera.position.z},{x:forward.x,z:forward.z}):undefined;
+  if(target===activeTarget)return;
+  activeTarget=target; interactionPrompt.hidden=!target;
+  interactionPrompt.textContent=target===undefined?"":`E · ${target==="old-man"?"examine old man":"read old parchment"}`;
+}
+function runInitialRoomDiagnostics() {
+  const paths=["/models/generated/training_room_3976.glb","/models/generated/old_man_3993.glb","/models/generated/old_parchment_3985.glb"];
+  const checks=[
+    [paths.every(path=>loadedModels.has(path)),"room, NPC, and item models loaded"],
+    [world.edges.filter(edge=>edge.from_room===INITIAL_ROOM_ID&&edge.direction==="W"&&!edge.hidden).length===1,"one canonical visible west exit"],
+    [initialRoomCommand("look at old man")==="inspect-old-man"&&initialRoomCommand("read parchment")==="read-parchment","tutorial commands mapped"],
+    [findInitialRoomTarget({x:2.7,z:-4.5},{x:0,z:-1})==="old-man","proximity and facing targeting active"],
+    [constrainInitialRoomMovement({x:99,z:-99}).x===8.45,"room wall constraints active"],
+  ] as const;
+  showInteraction("Room 3976 diagnostics",checks.map(([passed,label])=>`${passed?"PASS":"FAIL"} · ${label}`).join("\n"));
+}
+
 function buildRoom() {
   const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; camera.position.set(0,1.7,0);
   if (currentRoomId === 3976) {
@@ -85,7 +134,7 @@ function buildRoom() {
   });
   const roomSpawn=world.spawns.find(s=>s.id===currentRoomId); let markerIndex=0;
   for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e) marker(e,entry.entity_type,markerIndex++,generation); }
-  renderUi();
+  interactionPanel.hidden=true; activeTarget=undefined; interactionPrompt.hidden=true; renderUi(); renderTutorial();
 }
 
 function renderUi(message="") {
@@ -96,16 +145,24 @@ function renderUi(message="") {
   developer.hidden=!developerVisible; developer.textContent=[`room ${room.stable_id}`,`scope ${room.scope}`,`region ${room.display?.region??"unknown"} (${room.display?.region_name??"unknown"})`,`source row ${room.provenance?.source_row_id??"unknown"}`,`edges ${visible.length} visible / ${all.length} total`,`parallel directions ${[...new Set(all.filter((e,i,a)=>a.findIndex(x=>x.direction===e.direction)!==i).map(e=>e.direction))].join(", ")||"none"}`,`hidden ${showHidden?"shown":"suppressed"}`,`fixture ${world.fixture.id}`,`contract ${world.contract.name} ${world.contract.version}`].join("\n");
 }
 
-function go(edge: Edge) { currentRoomId=edge.to_room; buildRoom(); }
-function issue(raw: string) { const c=raw.trim().toLowerCase(); if(!c)return; if(c==="look"||c==="l")return renderUi("You look around."); const edge=travel(world,currentRoomId,c,showHidden); if(edge)return go(edge); renderUi(commandDirection(c)?"No such visible exit.":`Unknown command: ${raw}`); }
+function go(edge: Edge) { if(currentRoomId===INITIAL_ROOM_ID&&edge.direction==="W")tutorialProgress.add("west"); currentRoomId=edge.to_room; buildRoom(); }
+function issue(raw: string) {
+  const c=raw.trim().toLowerCase(); if(!c)return;
+  if(currentRoomId===INITIAL_ROOM_ID&&(c==="diagnose"||c==="test room"))return runInitialRoomDiagnostics();
+  const initialAction=currentRoomId===INITIAL_ROOM_ID?initialRoomCommand(c):undefined;
+  if(initialAction)return performInitialRoomAction(initialAction);
+  if(c==="look"||c==="l")return renderUi("You look around.");
+  const edge=travel(world,currentRoomId,c,showHidden); if(edge)return go(edge);
+  renderUi(commandDirection(c)?"No such visible exit.":`Unknown command: ${raw}`);
+}
 
 document.querySelector<HTMLFormElement>("#command-form")!.addEventListener("submit",event=>{event.preventDefault();const input=document.querySelector<HTMLInputElement>("#command")!;issue(input.value);input.value="";});
 canvas.addEventListener("click",()=>canvas.requestPointerLock()); document.addEventListener("mousemove",e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.002;pitch=Math.max(-1.35,Math.min(1.35,pitch-e.movementY*.002));});
-addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")return;keys.add(e.code);if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom();}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
+addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")return;keys.add(e.code);if(e.code==="KeyE"&&!e.repeat&&currentRoomId===INITIAL_ROOM_ID)interactNearby();if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom();}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
 let last=performance.now(), transitionCooldown=0;
-function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));if(keys.has("KeyW"))camera.position.addScaledVector(forward,dt*4);if(keys.has("KeyS"))camera.position.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))camera.position.addScaledVector(right,-dt*4);if(keys.has("KeyD"))camera.position.addScaledVector(right,dt*4);camera.position.y=1.7;camera.position.x=THREE.MathUtils.clamp(camera.position.x,-8.5,8.5);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-8.5,8.5);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>x.position.distanceTo(camera.position.clone().setY(0))<1.05);if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
+function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{camera.position.set(THREE.MathUtils.clamp(proposed.x,-8.5,8.5),1.7,THREE.MathUtils.clamp(proposed.z,-8.5,8.5));}updateInteractionPrompt(forward);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>x.position.distanceTo(camera.position.clone().setY(0))<1.05);if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
 
 async function boot(){try{const response=await fetch("/private/pendelhaven-v1.json",{cache:"no-store"});if(!response.ok)throw new Error(`fixture request failed (${response.status}). Run npm run prepare:fixture or the documented PowerShell command.`);world=validateWorld(await response.json());currentRoomId=world.fixture.primary_room_ids[0];renderer.setSize(innerWidth,innerHeight);buildRoom();requestAnimationFrame(frame);}catch(error){const box=document.querySelector<HTMLElement>("#error")!;box.hidden=false;box.textContent=`Unable to start\n\n${error instanceof Error?error.message:String(error)}`;}}
 void boot();
