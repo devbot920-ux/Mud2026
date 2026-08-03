@@ -1,6 +1,6 @@
 # Three.js comparison prototype
 
-This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Room 3976 also demonstrates original generated GLB models for a data-driven room, NPC, and item.
+This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Rooms 3976 through 3982 form a modeled tutorial route with data-driven exits, entities, props, and ambient animation.
 
 ## Setup
 
@@ -28,18 +28,21 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - Multiple arches remain distinct for parallel same-direction edges. In the fixture, room 4057's west edge leads to 4058 and room 4058's west edge remains west; no inverse is invented.
 - NPCs and items appear as labeled red and amber markers using the fixture's room-keyed spawn records.
 - Room 3976 replaces its generic chamber with a generated stone training room. NPC 3993 and item 3985 load generated low-poly models, while the old man's circular ground marker remains for readability.
+- Each room from 3977 through 3982 has a distinct generated shell matching its extracted purpose. Only canonical graph exits receive openings and travel triggers.
+- Ambient motion is room-specific: start-room torch flicker, council recitation pulses, library dust, discarded-paper movement, wardroom knife glints, market-sign sway, and a pulsing practice ring with combat-responsive dummy motion.
 - The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
 
 ## Initial room models
 
-The committed GLB assets in `public/models/generated/` are original procedural models generated with Blender 5.2. Regenerate all three plus a local preview with:
+The committed GLB assets in `public/models/generated/` are original procedural models generated with Blender 5.2. Regenerate the start-room assets and the six remaining route rooms with:
 
 ```powershell
 cd C:\code\Mud2026
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_initial_room_models.py
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_training_route_models.py
 ```
 
-The generator writes its preview to ignored `var/previews/initial-room-models.png`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.
+The generators write ignored previews under `var/previews/`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.
 
 Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3982 add a small in-memory inventory and deterministic practice-dummy combat. Other rooms remain comparison-prototype chambers. Door open/lock state, general NPC AI, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
 

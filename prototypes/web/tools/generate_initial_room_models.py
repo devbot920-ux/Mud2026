@@ -85,37 +85,25 @@ def export_glb(name: str) -> Path:
 def build_room() -> Path:
     clear()
     stone = material("Warm worn stone", (0.22, 0.20, 0.16, 1), roughness=0.92)
-    dark = material("Unlit blocked corridor", (0.025, 0.03, 0.035, 1), roughness=1)
     floor = material("Scuffed flagstones", (0.29, 0.255, 0.19, 1), roughness=0.98)
     trim = material("Aged sandstone trim", (0.38, 0.31, 0.20, 1), roughness=0.86)
     metal = material("Iron grating", (0.075, 0.08, 0.085, 1), metallic=0.7, roughness=0.45)
     ember = material("Torch ember", (0.8, 0.25, 0.035, 1), roughness=0.4, emission=(1.0, 0.16, 0.015, 1))
 
     cube("Flagstone floor", (0, -0.2, 0), (18, 0.4, 18), floor, 0.05)
-    # Segmented walls leave four recognizable arch openings. West stays open.
-    for z, side in ((-9, "North"), (9, "South")):
-        cube(f"{side} wall left", (-5.6, 2.4, z), (6.8, 4.8, 0.45), stone, 0.08)
-        cube(f"{side} wall right", (5.6, 2.4, z), (6.8, 4.8, 0.45), stone, 0.08)
-    for x, side in ((-9, "West"), (9, "East")):
-        cube(f"{side} wall near", (x, 2.4, -5.6), (0.45, 4.8, 6.8), stone, 0.08)
-        cube(f"{side} wall far", (x, 2.4, 5.6), (0.45, 4.8, 6.8), stone, 0.08)
-    for x, z, rotation, label in ((0, -9, (math.pi/2,0,0), "North"), (9, 0, (math.pi/2,0,math.pi/2), "East"), (0, 9, (math.pi/2,0,0), "South"), (-9, 0, (math.pi/2,0,math.pi/2), "West")):
-        cube(f"{label} arch lintel", (x, 3.75, z), (3.8 if x == 0 else 0.5, 0.55, 0.5 if x == 0 else 3.8), trim, 0.12)
-        if x == 0:
-            cube(f"{label} arch left post", (-1.9, 1.75, z), (0.55, 3.5, 0.55), trim, 0.1)
-            cube(f"{label} arch right post", (1.9, 1.75, z), (0.55, 3.5, 0.55), trim, 0.1)
-        else:
-            cube(f"{label} arch left post", (x, 1.75, -1.9), (0.55, 3.5, 0.55), trim, 0.1)
-            cube(f"{label} arch right post", (x, 1.75, 1.9), (0.55, 3.5, 0.55), trim, 0.1)
-    # N/E/S are visual corridors from the description but are sealed because the canonical graph has only W.
-    cube("North blocked darkness", (0, 1.7, -9.25), (3.2, 3.4, 0.18), dark)
-    cube("South blocked darkness", (0, 1.7, 9.25), (3.2, 3.4, 0.18), dark)
-    cube("East blocked darkness", (9.25, 1.7, 0), (0.18, 3.4, 3.2), dark)
-    for axis, base in (("N", (0, -9.48)), ("S", (0, 9.48))):
-        for i in range(-2, 3):
-            cube(f"{axis} grate {i}", (i * 0.48, 1.7, base[1]), (0.09, 3.2, 0.09), metal)
-    for i in range(-2, 3):
-        cube(f"E grate {i}", (9.48, 1.7, i * 0.48), (0.09, 3.2, 0.09), metal)
+    # The canonical graph has one exit. North, east, and south are solid walls;
+    # only the west wall is split around a visible passage.
+    cube("North solid wall", (0, 2.4, -9), (18, 4.8, 0.45), stone, 0.08)
+    cube("South solid wall", (0, 2.4, 9), (18, 4.8, 0.45), stone, 0.08)
+    cube("East solid wall", (9, 2.4, 0), (0.45, 4.8, 18), stone, 0.08)
+    cube("West wall near", (-9, 2.4, -5.6), (0.45, 4.8, 6.8), stone, 0.08)
+    cube("West wall far", (-9, 2.4, 5.6), (0.45, 4.8, 6.8), stone, 0.08)
+    cube("West arch lintel", (-9, 3.75, 0), (0.5, 0.55, 3.8), trim, 0.12)
+    cube("West arch north post", (-9, 1.75, -1.9), (0.55, 3.5, 0.55), trim, 0.1)
+    cube("West arch south post", (-9, 1.75, 1.9), (0.55, 3.5, 0.55), trim, 0.1)
+    # Shallow masonry panels decorate the sealed walls without reading as doors.
+    for x in (-5.2, 0, 5.2):
+        cube("North wall relief", (x, 2.15, -8.72), (2.5, 2.7, 0.12), trim, 0.04)
     # A westward flagstone guide reinforces the only authoritative passage.
     for i in range(5):
         cube(f"West guide stone {i}", (-1.4 - i * 1.35, -0.01, 0), (1.0, 0.08, 1.25), trim, 0.03)
