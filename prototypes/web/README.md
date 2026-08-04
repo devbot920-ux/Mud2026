@@ -1,6 +1,6 @@
 # Three.js comparison prototype
 
-This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Rooms 3976 through 3984 form a modeled tutorial route with data-driven exits, entities, props, and ambient animation.
+This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Rooms 3976 through 3984 form a modeled tutorial route, and rooms 4165 through 4173 form the modeled central Pendelhaven hub.
 
 ## Setup
 
@@ -32,6 +32,9 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - Ambient motion is room-specific: start-room torch flicker, council recitation pulses, library dust, discarded-paper movement, wardroom knife glints, market-sign sway, a pulsing practice ring with combat-responsive dummy motion, glowing dais symbols, and an altar light.
 - Every canonical NPC/mob on the route (3993–3998) has a full-body description-driven GLB: the old official, three distinct language instructors, the lazy halberd guard, and the rag-draped wooden dummy. Their idle motion matches their role while circular ground rings preserve gameplay readability.
 - The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. Continue `E, U` across the symbol-covered dais to reach room 3984's advancement altar. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
+- Continue `SE` into Pendelhaven Square. All nine central rooms have description-driven environments and all eight named inhabitants have individual models.
+- In Pendelhaven Arena (4168), press `E` at the gong or type `RING GONG` to summon one of four extracted opponents. Aim and press `E`, or type `ATTACK SLUG`, `ATTACK KOBOLD`, `ATTACK KOBOLD THUG`, or `ATTACK KOBOLD GUARD`.
+- Arena opponents fight back. The player has 100 health; defeat respawns the player at full health in Pendelhaven Hospice while preserving inventory. The arena cycles through giant slug, kobold, kobold thug, and hammer-bearing kobold guard models.
 
 ## Initial room models
 
@@ -42,11 +45,13 @@ cd C:\code\Mud2026
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_initial_room_models.py
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_training_route_models.py
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_training_characters.py
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_pendelhaven_hub_models.py
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_pendelhaven_characters.py
 ```
 
 The generators write ignored previews under `var/previews/`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.
 
-Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3984 add a small in-memory inventory, deterministic practice-dummy combat, and working vertical traversal between the enlightenment dais and advancement altar. Other rooms remain comparison-prototype chambers. Door open/lock state, general NPC AI, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
+Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3984 add a small in-memory inventory, deterministic practice-dummy combat, and working vertical traversal between the enlightenment dais and advancement altar. The central hub adds modeled shops and civic spaces, solid major furnishings, reciprocal arena combat, player health, victories, and hospice respawning. Other rooms remain comparison-prototype chambers. Door open/lock state, persistence, loot/economy, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
 
 ## Verification
 

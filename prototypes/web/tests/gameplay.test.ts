@@ -1,5 +1,5 @@
 import {describe,expect,it} from "vitest";
-import {findFacingEntity,gameplayCommand,practiceDamage} from "../src/gameplay";
+import {attackTargetName,findFacingEntity,gameplayCommand,practiceDamage} from "../src/gameplay";
 
 describe("generic gaze inspection",()=>{
   const entities=[{id:72,x:2,z:-2},{id:3998,x:-2,z:-2}];
@@ -11,7 +11,8 @@ describe("generic gaze inspection",()=>{
 });
 
 describe("knife and practice combat commands",()=>{
-  it.each([["get knife","get-knife"],["pick up a knife","get-knife"],["attack dummy","attack-dummy"],["a wooden dummy","attack-dummy"],["stop","stop-combat"],["i","inventory"]])("maps %s",(raw,expected)=>expect(gameplayCommand(raw)).toBe(expected));
+  it.each([["get knife","get-knife"],["pick up a knife","get-knife"],["attack dummy","attack-dummy"],["a wooden dummy","attack-dummy"],["ring the gong","ring-gong"],["stop","stop-combat"],["i","inventory"]])("maps %s",(raw,expected)=>expect(gameplayCommand(raw)).toBe(expected));
+  it("extracts a general hostile target",()=>expect(attackTargetName("attack the kobold guard")).toBe("kobold guard"));
   it("leaves travel commands alone",()=>expect(gameplayCommand("north")).toBeUndefined());
   it("makes the knife improve practice damage",()=>{expect(practiceDamage(false)).toBe(2);expect(practiceDamage(true)).toBe(5);});
 });

@@ -3,10 +3,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import "./style.css";
 import { commandDirection, edgesFrom, field, travel, validateWorld, type Edge, type Entity, type Room, type World } from "./model";
 import { INITIAL_ROOM_ID, constrainInitialRoomMovement, findInitialRoomTarget, initialRoomCommand, type InitialRoomAction } from "./room3976";
-import { findFacingEntity, gameplayCommand, practiceDamage } from "./gameplay";
+import { attackTargetName, findFacingEntity, gameplayCommand, practiceDamage } from "./gameplay";
 import { trainingRouteModel, type RouteAnimation } from "./routeModels";
-import { tutorialCharacterModel, type CharacterAnimation } from "./characterModels";
-import { entrySpawnAfterTravel, horizontalTriggerReached } from "./navigation";
+import { characterModel, type CharacterAnimation } from "./characterModels";
+import { constrainModeledMovement, entrySpawnAfterTravel, horizontalTriggerReached, modeledFloorHeight } from "./navigation";
+import { arenaOpponent, hostileStats, matchesHostileName, playerDamage } from "./combat";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -32,11 +33,20 @@ const playerStatus = document.querySelector<HTMLElement>("#player-status")!;
 interface RoomInteraction { id:number; entity: Entity; kind: "npc"|"item"; position: THREE.Vector3; count: number; x:number; z:number }
 const roomInteractions: RoomInteraction[]=[]; const inventory=new Set<number>();
 let activeEntityId: number|undefined, activeNearbyEntityId:number|undefined; let interactionPinned=false;
-let combatTargetId: number|undefined, dummyHealth=30, combatClock=0;
+let combatTargetId: number|undefined, dummyHealth=30, combatTargetHealth=0, combatClock=0, enemyCombatClock=0;
+let playerHealth=100,arenaRound=-1,arenaOpponentId:number|undefined,victories=0;
 interface AmbientMotion {object:THREE.Object3D;kind:RouteAnimation;phase:number;baseY:number}
 const ambientMotions:AmbientMotion[]=[]; let dummyVisual:THREE.Group|undefined;
 interface CharacterMotion {id:number;root:THREE.Group;head?:THREE.Object3D;kind:CharacterAnimation;baseY:number;baseRotationY:number}
-const characterMotions:CharacterMotion[]=[];
+const characterMotions:CharacterMotion[]=[];let activeHostileVisual:THREE.Group|undefined;
+const HOSTILE_IDS=new Set([129,4003,4004,4006]);
+
+const ENTITY_POSITIONS:Readonly<Record<number,{x:number;y:number;z:number}>>={
+  3993:{x:2.7,y:.42,z:-7.15},3985:{x:-2.6,y:2.05,z:-8.55},3991:{x:2,y:.35,z:-2},3992:{x:0,y:1,z:-1.2},
+  4175:{x:4.7,y:.42,z:-3.5},4176:{x:-3.5,y:.42,z:-3.0},4177:{x:3.4,y:.42,z:-3.0},4178:{x:4.4,y:.42,z:-1.8},
+  4179:{x:4.2,y:.42,z:-2.8},4180:{x:3.8,y:.42,z:-2.8},4181:{x:4.5,y:.42,z:2.2},4182:{x:4.8,y:.42,z:1.8},
+  129:{x:0,y:.42,z:0},4003:{x:0,y:.25,z:0},4004:{x:0,y:.42,z:0},4006:{x:0,y:.42,z:0},
+};
 
 const positions: Record<string, THREE.Vector3> = {
   N: new THREE.Vector3(0,0,-8), NE:new THREE.Vector3(5.65,0,-5.65), E:new THREE.Vector3(8,0,0), SE:new THREE.Vector3(5.65,0,5.65),
@@ -71,23 +81,32 @@ function addRoomAnimation(kind:RouteAnimation){
   else if(kind==="arena"){const ring=new THREE.Mesh(new THREE.TorusGeometry(3.8,.045,7,48),new THREE.MeshBasicMaterial({color:0xd65a42,transparent:true,opacity:.45}));ring.rotation.x=Math.PI/2;ring.position.y=.04;trackAmbient(ring,kind,0);}
   else if(kind==="dais")for(let i=0;i<7;i++){const glyph=new THREE.Mesh(new THREE.BoxGeometry(.3,.035,.18),new THREE.MeshBasicMaterial({color:0xd8a63f}));glyph.position.set(.45+i*.52,.18+i*.13,-.45-i*.52);glyph.rotation.y=-Math.PI/4;trackAmbient(glyph,kind,i*.55);}
   else if(kind==="altar"){const glow=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),new THREE.MeshBasicMaterial({color:0xffd875,transparent:true,opacity:.72}));glow.position.set(0,2.35,-1.2);trackAmbient(glow,kind,0);}
+  else if(kind==="square")for(const [i,x] of [-2.2,2.2].entries()){const banner=new THREE.Mesh(new THREE.PlaneGeometry(1.1,2.4),new THREE.MeshStandardMaterial({color:i?0x315b78:0x8b3b35,side:THREE.DoubleSide}));banner.position.set(x,3.3,0);trackAmbient(banner,kind,i*1.2);}
+  else if(kind==="forge")for(let i=0;i<12;i++){const ember=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),new THREE.MeshBasicMaterial({color:0xff6b26}));ember.position.set(-5.2,.7+i*.08,-5.5);trackAmbient(ember,kind,i*.4);}
+  else if(kind==="summoning"){const ring=new THREE.Mesh(new THREE.TorusGeometry(3,.07,8,64),new THREE.MeshBasicMaterial({color:0xe43b35,transparent:true,opacity:.65}));ring.rotation.x=Math.PI/2;ring.position.y=.07;trackAmbient(ring,kind,0);}
+  else if(kind==="healing")for(let i=0;i<8;i++){const mote=new THREE.Mesh(new THREE.SphereGeometry(.06,7,5),new THREE.MeshBasicMaterial({color:0xc9b4ff,transparent:true,opacity:.65}));mote.position.set(Math.cos(i*.8)*2,1+i*.2,Math.sin(i*.8)*2-.8);trackAmbient(mote,kind,i*.7);}
+  else if(kind==="guild"){const pulse=new THREE.Mesh(new THREE.TorusGeometry(2.6,.045,7,48),new THREE.MeshBasicMaterial({color:0xffa75c,transparent:true,opacity:.4}));pulse.rotation.x=Math.PI/2;pulse.position.y=.05;trackAmbient(pulse,kind,0);}
+  else if(kind==="bank"||kind==="armor")for(let i=0;i<6;i++){const glint=new THREE.Mesh(new THREE.SphereGeometry(.045,6,4),new THREE.MeshBasicMaterial({color:0xffdd8a}));glint.position.set(-2.5+i,1.45,-4);trackAmbient(glint,kind,i*.65);}
+  else if(kind==="store"||kind==="tavern")for(let i=0;i<9;i++){const mote=new THREE.Mesh(new THREE.SphereGeometry(.05,6,4),new THREE.MeshBasicMaterial({color:kind==="tavern"?0x806a58:0xd6bc81,transparent:true,opacity:.28}));mote.position.set(-4+i,1+(i%4),-2+(i%3));trackAmbient(mote,kind,i*.5);}
 }
 function animateRoom(now:number){const t=now/1000;torch.intensity=currentRoomId===INITIAL_ROOM_ID?36+Math.sin(t*9)*4+Math.sin(t*17)*2:25;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="speech"){o.position.y=motion.baseY+Math.sin(t*2.2+p)*.18;o.rotation.z=t*.45+p;}else if(motion.kind==="dust"){o.position.y=.25+((motion.baseY+t*.18+p)%4.1);o.position.x+=Math.sin(t*.5+p)*.0008;}else if(motion.kind==="scraps"){o.position.y=motion.baseY+.08+Math.sin(t*1.5+p)*.09;o.rotation.x=t*.35+p;o.rotation.y=t*.22+p;}else if(motion.kind==="glints"){const s=.35+Math.max(0,Math.sin(t*3+p))*1.2;o.scale.setScalar(s);}else if(motion.kind==="signs")o.rotation.z=Math.sin(t*.85+p)*.075;else if(motion.kind==="arena"){const s=1+Math.sin(t*1.7)*.018;o.scale.setScalar(s);}else if(motion.kind==="dais"){const s=.6+Math.max(0,Math.sin(t*2+p))*.9;o.scale.setScalar(s);}else if(motion.kind==="altar"){o.position.y=motion.baseY+Math.sin(t*1.4)*.18;const s=.8+Math.sin(t*2.1)*.14;o.scale.setScalar(s);}}for(const motion of characterMotions){motion.root.position.y=motion.baseY;if(motion.kind==="slump")motion.root.rotation.z=-.07+Math.sin(t*.7)*.018;else if(motion.kind==="gossip")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.9)*.28;else if(motion.kind==="whisper")motion.root.position.y=motion.baseY+Math.sin(t*1.2)*.025;else if(motion.kind==="nod"&&motion.head)motion.head.rotation.x=Math.sin(t*2.25)*.16;else if(motion.kind==="lean")motion.root.rotation.z=.08+Math.sin(t*.55)*.018;}if(dummyVisual)dummyVisual.rotation.z=combatTargetId===3998?Math.sin(t*13)*.045:THREE.MathUtils.lerp(dummyVisual.rotation.z,0,.08);}
+
+function animateCentralMotions(now:number){const t=now/1000;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="square")o.rotation.y=Math.sin(t*.8+p)*.09;else if(motion.kind==="forge"){o.position.y=motion.baseY+((t*.7+p)%1.8);o.scale.setScalar(.5+Math.sin(t*4+p)*.25);}else if(motion.kind==="summoning"||motion.kind==="guild"){const s=1+Math.sin(t*2+p)*.035;o.scale.setScalar(s);o.rotation.z=t*.08;}else if(motion.kind==="healing"){o.position.y=motion.baseY+Math.sin(t*1.4+p)*.35;o.rotation.y=t*.3+p;}else if(motion.kind==="bank"||motion.kind==="armor"){const s=.4+Math.max(0,Math.sin(t*3+p));o.scale.setScalar(s);}else if(motion.kind==="store"||motion.kind==="tavern")o.position.y=motion.baseY+((t*.12+p)%2.4);}for(const motion of characterMotions){if(motion.kind==="merchant")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.55+motion.id)*.08;else if(motion.kind==="healer")motion.root.position.y=motion.baseY+Math.sin(t*1.4)*.035;else if(motion.kind==="trainer")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.9)*.14;else if(motion.kind==="slug")motion.root.scale.z=1+Math.sin(t*3)*.06;else if(motion.kind==="kobold"||motion.kind==="thug"||motion.kind==="guard")motion.root.rotation.z=(combatTargetId===motion.id?Math.sin(t*9)*.04:Math.sin(t*1.8+motion.id)*.015);}if(activeHostileVisual&&combatTargetId&&HOSTILE_IDS.has(combatTargetId))activeHostileVisual.position.z=Math.sin(t*5)*.04;}
 
 function marker(entity: Entity, kind: "npc"|"item", index: number, generation: number, count: number) {
   const color = kind === "npc" ? 0xa94d3c : 0xc3a44d; const radius = kind === "npc" ? .42 : .25;
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 12), material(color,.55));
   const angle = index * 2.2; const defaultPosition = new THREE.Vector3(Math.cos(angle) * 2.3, radius, Math.sin(angle) * 2.3);
-  const knownPosition = entity.id === 3993 ? new THREE.Vector3(2.7, radius, -7.15) : entity.id === 3985 ? new THREE.Vector3(-2.6, 2.05, -8.55) : entity.id===3991?new THREE.Vector3(2,.35,-2):entity.id===3992?new THREE.Vector3(0,1.0,-1.2):defaultPosition;
+  const configured=ENTITY_POSITIONS[entity.id];const knownPosition=configured?new THREE.Vector3(configured.x,configured.y,configured.z):defaultPosition;
   mesh.position.copy(knownPosition); mesh.castShadow = true; chamber.add(mesh);
   roomInteractions.push({id:entity.id,entity,kind,position:knownPosition.clone(),count,x:knownPosition.x,z:knownPosition.z});
-  const character=tutorialCharacterModel(entity.id);
+  const character=characterModel(entity.id);
   const label = sprite(`${kind.toUpperCase()} · ${field(entity,"short_description",String(entity.id))}${count>1?` ×${count}`:""}`); label.position.copy(mesh.position).add(new THREE.Vector3(0,character?3.05:1,0)); chamber.add(label);
   if (character) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(.72,.07,8,32),new THREE.MeshBasicMaterial({color:0xe56b50}));
+    const hostile=HOSTILE_IDS.has(entity.id);const ring = new THREE.Mesh(new THREE.TorusGeometry(hostile?1.0:.72,.07,8,32),new THREE.MeshBasicMaterial({color:hostile?0xff3030:0xe56b50}));
     ring.rotation.x = Math.PI / 2; ring.position.set(knownPosition.x,.04,knownPosition.z); chamber.add(ring);
     mesh.visible = false;
-    void addModel(character.path,generation,model=>{model.position.set(knownPosition.x,0,knownPosition.z);model.rotation.y=Math.atan2(-knownPosition.x,-knownPosition.z);const motion={id:entity.id,root:model,head:model.getObjectByName("Head"),kind:character.animation,baseY:0,baseRotationY:model.rotation.y};characterMotions.push(motion);if(entity.id===3998)dummyVisual=model;});
+    void addModel(character.path,generation,model=>{model.position.set(knownPosition.x,0,knownPosition.z);model.rotation.y=Math.atan2(-knownPosition.x,-knownPosition.z);const motion={id:entity.id,root:model,head:model.getObjectByName("Head"),kind:character.animation,baseY:0,baseRotationY:model.rotation.y};characterMotions.push(motion);if(entity.id===3998)dummyVisual=model;if(hostile)activeHostileVisual=model;});
   } else if (entity.id === 3985) {
     mesh.visible = false;
     label.position.set(-2.6,3.25,-8.35);
@@ -99,9 +118,10 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
 
 function entity(id: number): Entity | undefined { return [...world.npcs,...world.items].find(candidate=>candidate.id===id); }
+const ARENA_GONG:Entity={id:-4168,stable_id:"interaction:arena-gong",fields:[{name:"short_description",value:"arena gong",confidence:"confirmed"},{name:"long_description",value:"A heavy brass gong used to summon a free arena opponent. Press E or type RING GONG.",confidence:"confirmed"}]};
 function cleanDescription(text:string){return text.replace(/\r/g,"\n").replace(/\n\s*\n\s*\d{4,}\s*\n[\s\S]*$/," ").trim();}
 function showInteraction(heading: string, text: string, pinned=true) { interactionPinned=pinned;interactionTitle.textContent=heading; interactionText.textContent=cleanDescription(text); interactionPanel.hidden=false; }
-function renderPlayerStatus(){playerStatus.textContent=[`INVENTORY · ${inventory.has(72)?"knife":"empty"}`,combatTargetId===3998?`COMBAT · wooden dummy ${dummyHealth}/30 HP`:"COMBAT · peaceful"].join("\n");}
+function renderPlayerStatus(){const stats=combatTargetId?hostileStats(combatTargetId):undefined;playerStatus.textContent=[`HEALTH · ${playerHealth}/100 HP`,`INVENTORY · ${inventory.has(72)?"knife":"empty"}`,stats?`COMBAT · ${stats.name} ${combatTargetHealth}/${stats.maxHealth} HP`:combatTargetId===3998?`COMBAT · wooden dummy ${dummyHealth}/30 HP`:"COMBAT · peaceful",`ARENA VICTORIES · ${victories}`].join("\n");}
 function renderTutorial() {
   tutorial.hidden=currentRoomId!==INITIAL_ROOM_ID;
   if(tutorial.hidden)return;
@@ -127,12 +147,14 @@ function interactEntity(target:RoomInteraction){
   if(target.entity.id===3985)return performInitialRoomAction("read-parchment");
   if(target.entity.id===72){inventory.add(72);showInteraction("You take a knife",field(target.entity,"long_description","You take one of the knives."));renderPlayerStatus();return;}
   if(target.entity.id===3998)return startDummyCombat();
+  if(target.entity.id===ARENA_GONG.id)return ringArenaGong();
+  if(HOSTILE_IDS.has(target.entity.id))return startHostileCombat(target.entity.id);
   showInteraction(field(target.entity,"short_description",String(target.entity.id)),field(target.entity,"long_description","You see nothing unusual."));
 }
 function updateInteractionPrompt(forward: THREE.Vector3) {
   const position={x:camera.position.x,z:camera.position.z},direction={x:forward.x,z:forward.z};
   const target=findFacingEntity(position,direction,roomInteractions,9); const nearby=findFacingEntity(position,direction,roomInteractions);
-  if(nearby?.entity.id!==activeNearbyEntityId){activeNearbyEntityId=nearby?.entity.id;interactionPrompt.hidden=!nearby;if(nearby){const action=nearby.entity.id===72?"take knife":nearby.entity.id===3998?"attack dummy":"interact";interactionPrompt.textContent=`E · ${action}`;}}
+  if(nearby?.entity.id!==activeNearbyEntityId){activeNearbyEntityId=nearby?.entity.id;interactionPrompt.hidden=!nearby;if(nearby){const action=nearby.entity.id===72?"take knife":nearby.entity.id===3998?"attack dummy":nearby.entity.id===ARENA_GONG.id?"ring gong":HOSTILE_IDS.has(nearby.entity.id)?`attack ${field(nearby.entity,"short_description","opponent")}`:"interact";interactionPrompt.textContent=`E · ${action}`;}}
   if(target?.entity.id===activeEntityId)return;
   activeEntityId=target?.entity.id;
   if(target){
@@ -140,8 +162,11 @@ function updateInteractionPrompt(forward: THREE.Vector3) {
   }else if(!interactionPinned)interactionPanel.hidden=true;
 }
 function startDummyCombat(){if(currentRoomId!==3982)return showInteraction("No target","The wooden practice dummy is not here.");combatTargetId=3998;combatClock=0;showInteraction("Combat started",`You attack the wooden dummy${inventory.has(72)?" with your knife":" with your bare hands"}. Type STOP to disengage.`);renderPlayerStatus();}
-function stopCombat(){combatTargetId=undefined;combatClock=0;showInteraction("Combat stopped","You stop attacking.");renderPlayerStatus();}
-function advanceCombat(dt:number){if(combatTargetId!==3998)return;combatClock+=dt;if(combatClock<.8)return;combatClock-=.8;const damage=practiceDamage(inventory.has(72));dummyHealth=Math.max(0,dummyHealth-damage);showInteraction("You strike the wooden dummy",`${inventory.has(72)?"Your knife bites into the practice wood":"Your blow thumps against the wood"} for ${damage} damage.\n\nDummy: ${dummyHealth}/30 HP`);if(dummyHealth===0){combatTargetId=undefined;interactionText.textContent+="\n\nThe battered dummy yields. Practice complete.";}renderPlayerStatus();}
+function ringArenaGong(){if(currentRoomId!==4168)return showInteraction("No gong here","The Pendelhaven arena gong is not here.");arenaRound+=1;arenaOpponentId=arenaOpponent(arenaRound);const stats=hostileStats(arenaOpponentId)!;combatTargetHealth=stats.maxHealth;combatTargetId=undefined;combatClock=enemyCombatClock=0;buildRoom(undefined,true);showInteraction("The arena gong booms",`Smoke curls from the summoning circle. A ${stats.name} materializes with ${stats.maxHealth} health. Aim at it and press E, or type ATTACK ${stats.name.toUpperCase()}.`);renderPlayerStatus();}
+function startHostileCombat(id:number){const stats=hostileStats(id);if(currentRoomId!==4168||arenaOpponentId!==id||!stats)return showInteraction("No target","That opponent is not available here.");if(combatTargetHealth<=0)return showInteraction("Opponent defeated","Ring the gong to summon the next arena opponent.");combatTargetId=id;combatClock=enemyCombatClock=0;showInteraction("Arena combat started",`You engage the ${stats.name}${inventory.has(72)?" with your knife":" with your bare hands"}. It will fight back. Type STOP to disengage.`);renderPlayerStatus();}
+function stopCombat(){combatTargetId=undefined;combatClock=enemyCombatClock=0;showInteraction("Combat stopped","You stop attacking.");renderPlayerStatus();}
+function respawnPlayer(){playerHealth=100;combatTargetId=undefined;arenaOpponentId=undefined;combatTargetHealth=0;combatClock=enemyCombatClock=0;currentRoomId=4169;buildRoom();camera.position.set(4.5,1.7,4.5);yaw=-Math.PI*3/4;showInteraction("You awaken in Pendelhaven Hospice","Vivian and the healers restore you to full health. Your equipment remains with you.");renderPlayerStatus();}
+function advanceCombat(dt:number){if(combatTargetId===3998){combatClock+=dt;if(combatClock<.8)return;combatClock-=.8;const damage=practiceDamage(inventory.has(72));dummyHealth=Math.max(0,dummyHealth-damage);showInteraction("You strike the wooden dummy",`${inventory.has(72)?"Your knife bites into the practice wood":"Your blow thumps against the wood"} for ${damage} damage.\n\nDummy: ${dummyHealth}/30 HP`);if(dummyHealth===0){combatTargetId=undefined;interactionText.textContent+="\n\nThe battered dummy yields. Practice complete.";}renderPlayerStatus();return;}const stats=combatTargetId?hostileStats(combatTargetId):undefined;if(!stats)return;combatClock+=dt;enemyCombatClock+=dt;let message="";if(combatClock>=.8){combatClock-=.8;const damage=playerDamage(inventory.has(72));combatTargetHealth=Math.max(0,combatTargetHealth-damage);message=`You strike the ${stats.name} for ${damage} damage.`;if(combatTargetHealth===0){victories+=1;combatTargetId=undefined;if(activeHostileVisual)activeHostileVisual.rotation.z=Math.PI/2;message+=`\n\nThe ${stats.name} collapses. Arena victory ${victories}. Ring the gong for another opponent.`;showInteraction("Victory",message);renderPlayerStatus();return;}}if(enemyCombatClock>=stats.attackInterval){enemyCombatClock-=stats.attackInterval;playerHealth=Math.max(0,playerHealth-stats.damage);message+=`${message?"\n":""}The ${stats.name} hits you for ${stats.damage} damage.`;if(playerHealth===0){respawnPlayer();return;}}if(message)showInteraction(`Fighting ${stats.name}`,`${message}\n\nYou: ${playerHealth}/100 HP · ${stats.name}: ${combatTargetHealth}/${stats.maxHealth} HP`);renderPlayerStatus();}
 function runInitialRoomDiagnostics() {
   const paths=["/models/generated/training_room_3976.glb","/models/generated/old_man_3993.glb","/models/generated/old_parchment_3985.glb"];
   const checks=[
@@ -156,9 +181,9 @@ function runInitialRoomDiagnostics() {
 
 function buildRoom(entryEdge?:Edge,preserveCamera=false) {
   const previousPosition=camera.position.clone(),previousYaw=yaw,previousPitch=pitch;
-  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;
+  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;activeHostileVisual=undefined;
   if(preserveCamera){camera.position.copy(previousPosition);yaw=previousYaw;pitch=previousPitch;}else{const arrivalDirection=entryEdge?edgesFrom(world,currentRoomId,true).find(edge=>edge.to_room===entryEdge.from_room)?.direction:undefined;const spawn=entryEdge?entrySpawnAfterTravel(entryEdge.direction,arrivalDirection):undefined;if(spawn){camera.position.set(spawn.x,1.7,spawn.z);yaw=spawn.yaw;pitch=0;}else{camera.position.set(0,1.7,0);yaw=0;pitch=0;}}
-  if(currentRoomId!==3982){combatTargetId=undefined;combatClock=0;}else if(dummyHealth<=0)dummyHealth=30;
+  if(currentRoomId!==3982&&currentRoomId!==4168){combatTargetId=undefined;combatClock=enemyCombatClock=0;}else if(currentRoomId===3982&&dummyHealth<=0)dummyHealth=30;
   const modeledRoom=trainingRouteModel(currentRoomId);
   if (modeledRoom) {
     scene.background=new THREE.Color(modeledRoom.background);scene.fog=new THREE.Fog(modeledRoom.background,12,29);torch.color.setHex(modeledRoom.light);skyLight.intensity=1.55;
@@ -184,6 +209,7 @@ function buildRoom(entryEdge?:Edge,preserveCamera=false) {
   });
   const roomSpawn=world.spawns.find(s=>s.id===currentRoomId); let markerIndex=0;
   for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e) marker(e,entry.entity_type,markerIndex++,generation,entry.count); }
+  if(currentRoomId===4168){const gongPosition=new THREE.Vector3(5.1,.7,-2.8);roomInteractions.push({id:ARENA_GONG.id,entity:ARENA_GONG,kind:"item",position:gongPosition,count:1,x:gongPosition.x,z:gongPosition.z});const gongLabel=sprite("INTERACT · arena gong");gongLabel.position.set(gongPosition.x,2.8,gongPosition.z);chamber.add(gongLabel);if(arenaOpponentId){const opponent=entity(arenaOpponentId);if(opponent)marker(opponent,"npc",markerIndex++,generation,1);}}
   if(modeledRoom)addRoomAnimation(modeledRoom.animation);
   interactionPanel.hidden=true; interactionPinned=false; activeEntityId=undefined; activeNearbyEntityId=undefined; interactionPrompt.hidden=true; renderUi(); renderTutorial(); renderPlayerStatus();
 }
@@ -208,8 +234,10 @@ function issue(raw: string) {
     inventory.add(72);showInteraction("You take a knife",field(entity(72)!,"long_description","You take one of the knives."));renderPlayerStatus();return;
   }
   if(action==="attack-dummy")return startDummyCombat();
+  if(action==="ring-gong")return ringArenaGong();
   if(action==="stop-combat")return stopCombat();
   if(action==="inventory")return showInteraction("Inventory",inventory.has(72)?"knife":"You are carrying nothing.");
+  const targetName=attackTargetName(c);if(targetName&&arenaOpponentId&&matchesHostileName(arenaOpponentId,targetName))return startHostileCombat(arenaOpponentId);
   if(c==="look"||c==="l")return renderUi("You look around.");
   const edge=travel(world,currentRoomId,c,showHidden); if(edge)return go(edge);
   renderUi(commandDirection(c)?"No such visible exit.":`Unknown command: ${raw}`);
@@ -221,7 +249,7 @@ addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")re
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
 let last=performance.now(), transitionCooldown=0;
-function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{camera.position.set(THREE.MathUtils.clamp(proposed.x,-8.5,8.5),1.7,THREE.MathUtils.clamp(proposed.z,-8.5,8.5));}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>horizontalTriggerReached(camera.position,x.position));if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
+function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{const constrained=constrainModeledMovement(currentRoomId,{x:camera.position.x,z:camera.position.z},{x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7+modeledFloorHeight(currentRoomId,constrained),constrained.z);}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);animateCentralMotions(now);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>horizontalTriggerReached(camera.position,x.position));if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
 
 async function boot(){try{const response=await fetch("/private/pendelhaven-v1.json",{cache:"no-store"});if(!response.ok)throw new Error(`fixture request failed (${response.status}). Run npm run prepare:fixture or the documented PowerShell command.`);world=validateWorld(await response.json());currentRoomId=world.fixture.primary_room_ids[0];renderer.setSize(innerWidth,innerHeight);buildRoom();requestAnimationFrame(frame);}catch(error){const box=document.querySelector<HTMLElement>("#error")!;box.hidden=false;box.textContent=`Unable to start\n\n${error instanceof Error?error.message:String(error)}`;}}
 void boot();
