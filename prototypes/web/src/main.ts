@@ -6,6 +6,7 @@ import { INITIAL_ROOM_ID, constrainInitialRoomMovement, findInitialRoomTarget, i
 import { findFacingEntity, gameplayCommand, practiceDamage } from "./gameplay";
 import { trainingRouteModel, type RouteAnimation } from "./routeModels";
 import { tutorialCharacterModel, type CharacterAnimation } from "./characterModels";
+import { entrySpawnAfterTravel, horizontalTriggerReached } from "./navigation";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -68,14 +69,16 @@ function addRoomAnimation(kind:RouteAnimation){
   else if(kind==="glints")for(let i=0;i<4;i++){const glint=new THREE.Mesh(new THREE.SphereGeometry(.07,7,5),new THREE.MeshBasicMaterial({color:0xeafcff}));glint.position.set(6.85,1.75,-2.4+i*1.6);trackAmbient(glint,kind,i*.9);}
   else if(kind==="signs")for(const [index,x] of [-4.2,4.2].entries()){const pivot=new THREE.Group();pivot.position.set(x,3.0,-.05);const sign=new THREE.Mesh(new THREE.BoxGeometry(1.7,.72,.08),new THREE.MeshStandardMaterial({color:index?0x315889:0x8b3126,roughness:.8}));sign.position.y=-.42;pivot.add(sign);trackAmbient(pivot,kind,index*1.3);}
   else if(kind==="arena"){const ring=new THREE.Mesh(new THREE.TorusGeometry(3.8,.045,7,48),new THREE.MeshBasicMaterial({color:0xd65a42,transparent:true,opacity:.45}));ring.rotation.x=Math.PI/2;ring.position.y=.04;trackAmbient(ring,kind,0);}
+  else if(kind==="dais")for(let i=0;i<7;i++){const glyph=new THREE.Mesh(new THREE.BoxGeometry(.3,.035,.18),new THREE.MeshBasicMaterial({color:0xd8a63f}));glyph.position.set(.45+i*.52,.18+i*.13,-.45-i*.52);glyph.rotation.y=-Math.PI/4;trackAmbient(glyph,kind,i*.55);}
+  else if(kind==="altar"){const glow=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),new THREE.MeshBasicMaterial({color:0xffd875,transparent:true,opacity:.72}));glow.position.set(0,2.35,-1.2);trackAmbient(glow,kind,0);}
 }
-function animateRoom(now:number){const t=now/1000;torch.intensity=currentRoomId===INITIAL_ROOM_ID?36+Math.sin(t*9)*4+Math.sin(t*17)*2:25;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="speech"){o.position.y=motion.baseY+Math.sin(t*2.2+p)*.18;o.rotation.z=t*.45+p;}else if(motion.kind==="dust"){o.position.y=.25+((motion.baseY+t*.18+p)%4.1);o.position.x+=Math.sin(t*.5+p)*.0008;}else if(motion.kind==="scraps"){o.position.y=motion.baseY+.08+Math.sin(t*1.5+p)*.09;o.rotation.x=t*.35+p;o.rotation.y=t*.22+p;}else if(motion.kind==="glints"){const s=.35+Math.max(0,Math.sin(t*3+p))*1.2;o.scale.setScalar(s);}else if(motion.kind==="signs")o.rotation.z=Math.sin(t*.85+p)*.075;else if(motion.kind==="arena"){const s=1+Math.sin(t*1.7)*.018;o.scale.setScalar(s);}}for(const motion of characterMotions){motion.root.position.y=motion.baseY;if(motion.kind==="slump")motion.root.rotation.z=-.07+Math.sin(t*.7)*.018;else if(motion.kind==="gossip")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.9)*.28;else if(motion.kind==="whisper")motion.root.position.y=motion.baseY+Math.sin(t*1.2)*.025;else if(motion.kind==="nod"&&motion.head)motion.head.rotation.x=Math.sin(t*2.25)*.16;else if(motion.kind==="lean")motion.root.rotation.z=.08+Math.sin(t*.55)*.018;}if(dummyVisual)dummyVisual.rotation.z=combatTargetId===3998?Math.sin(t*13)*.045:THREE.MathUtils.lerp(dummyVisual.rotation.z,0,.08);}
+function animateRoom(now:number){const t=now/1000;torch.intensity=currentRoomId===INITIAL_ROOM_ID?36+Math.sin(t*9)*4+Math.sin(t*17)*2:25;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="speech"){o.position.y=motion.baseY+Math.sin(t*2.2+p)*.18;o.rotation.z=t*.45+p;}else if(motion.kind==="dust"){o.position.y=.25+((motion.baseY+t*.18+p)%4.1);o.position.x+=Math.sin(t*.5+p)*.0008;}else if(motion.kind==="scraps"){o.position.y=motion.baseY+.08+Math.sin(t*1.5+p)*.09;o.rotation.x=t*.35+p;o.rotation.y=t*.22+p;}else if(motion.kind==="glints"){const s=.35+Math.max(0,Math.sin(t*3+p))*1.2;o.scale.setScalar(s);}else if(motion.kind==="signs")o.rotation.z=Math.sin(t*.85+p)*.075;else if(motion.kind==="arena"){const s=1+Math.sin(t*1.7)*.018;o.scale.setScalar(s);}else if(motion.kind==="dais"){const s=.6+Math.max(0,Math.sin(t*2+p))*.9;o.scale.setScalar(s);}else if(motion.kind==="altar"){o.position.y=motion.baseY+Math.sin(t*1.4)*.18;const s=.8+Math.sin(t*2.1)*.14;o.scale.setScalar(s);}}for(const motion of characterMotions){motion.root.position.y=motion.baseY;if(motion.kind==="slump")motion.root.rotation.z=-.07+Math.sin(t*.7)*.018;else if(motion.kind==="gossip")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.9)*.28;else if(motion.kind==="whisper")motion.root.position.y=motion.baseY+Math.sin(t*1.2)*.025;else if(motion.kind==="nod"&&motion.head)motion.head.rotation.x=Math.sin(t*2.25)*.16;else if(motion.kind==="lean")motion.root.rotation.z=.08+Math.sin(t*.55)*.018;}if(dummyVisual)dummyVisual.rotation.z=combatTargetId===3998?Math.sin(t*13)*.045:THREE.MathUtils.lerp(dummyVisual.rotation.z,0,.08);}
 
 function marker(entity: Entity, kind: "npc"|"item", index: number, generation: number, count: number) {
   const color = kind === "npc" ? 0xa94d3c : 0xc3a44d; const radius = kind === "npc" ? .42 : .25;
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 12), material(color,.55));
   const angle = index * 2.2; const defaultPosition = new THREE.Vector3(Math.cos(angle) * 2.3, radius, Math.sin(angle) * 2.3);
-  const knownPosition = entity.id === 3993 ? new THREE.Vector3(2.7, radius, -7.15) : entity.id === 3985 ? new THREE.Vector3(-2.6, 2.05, -8.55) : defaultPosition;
+  const knownPosition = entity.id === 3993 ? new THREE.Vector3(2.7, radius, -7.15) : entity.id === 3985 ? new THREE.Vector3(-2.6, 2.05, -8.55) : entity.id===3991?new THREE.Vector3(2,.35,-2):entity.id===3992?new THREE.Vector3(0,1.0,-1.2):defaultPosition;
   mesh.position.copy(knownPosition); mesh.castShadow = true; chamber.add(mesh);
   roomInteractions.push({id:entity.id,entity,kind,position:knownPosition.clone(),count,x:knownPosition.x,z:knownPosition.z});
   const character=tutorialCharacterModel(entity.id);
@@ -90,6 +93,7 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
     label.position.set(-2.6,3.25,-8.35);
     void addModel("/models/generated/old_parchment_3985.glb", generation, model => { model.position.set(-2.6,2.05,-8.55); model.rotation.y = Math.PI; });
   } else if(entity.id===72){mesh.visible=false;addKnifeModel(knownPosition);}
+  else if(entity.id===3991||entity.id===3992)mesh.visible=false;
 }
 
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
@@ -150,8 +154,10 @@ function runInitialRoomDiagnostics() {
   showInteraction("Room 3976 diagnostics",checks.map(([passed,label])=>`${passed?"PASS":"FAIL"} · ${label}`).join("\n"));
 }
 
-function buildRoom() {
-  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;camera.position.set(0,1.7,0);
+function buildRoom(entryEdge?:Edge,preserveCamera=false) {
+  const previousPosition=camera.position.clone(),previousYaw=yaw,previousPitch=pitch;
+  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;
+  if(preserveCamera){camera.position.copy(previousPosition);yaw=previousYaw;pitch=previousPitch;}else{const arrivalDirection=entryEdge?edgesFrom(world,currentRoomId,true).find(edge=>edge.to_room===entryEdge.from_room)?.direction:undefined;const spawn=entryEdge?entrySpawnAfterTravel(entryEdge.direction,arrivalDirection):undefined;if(spawn){camera.position.set(spawn.x,1.7,spawn.z);yaw=spawn.yaw;pitch=0;}else{camera.position.set(0,1.7,0);yaw=0;pitch=0;}}
   if(currentRoomId!==3982){combatTargetId=undefined;combatClock=0;}else if(dummyHealth<=0)dummyHealth=30;
   const modeledRoom=trainingRouteModel(currentRoomId);
   if (modeledRoom) {
@@ -190,7 +196,7 @@ function renderUi(message="") {
   developer.hidden=!developerVisible; developer.textContent=[`room ${room.stable_id}`,`scope ${room.scope}`,`region ${room.display?.region??"unknown"} (${room.display?.region_name??"unknown"})`,`source row ${room.provenance?.source_row_id??"unknown"}`,`edges ${visible.length} visible / ${all.length} total`,`parallel directions ${[...new Set(all.filter((e,i,a)=>a.findIndex(x=>x.direction===e.direction)!==i).map(e=>e.direction))].join(", ")||"none"}`,`hidden ${showHidden?"shown":"suppressed"}`,`fixture ${world.fixture.id}`,`contract ${world.contract.name} ${world.contract.version}`].join("\n");
 }
 
-function go(edge: Edge) { if(currentRoomId===INITIAL_ROOM_ID&&edge.direction==="W")tutorialProgress.add("west"); currentRoomId=edge.to_room; buildRoom(); }
+function go(edge: Edge) { if(currentRoomId===INITIAL_ROOM_ID&&edge.direction==="W")tutorialProgress.add("west"); currentRoomId=edge.to_room; buildRoom(edge); }
 function issue(raw: string) {
   const c=raw.trim().toLowerCase(); if(!c)return;
   if(currentRoomId===INITIAL_ROOM_ID&&(c==="diagnose"||c==="test room"))return runInitialRoomDiagnostics();
@@ -211,11 +217,11 @@ function issue(raw: string) {
 
 document.querySelector<HTMLFormElement>("#command-form")!.addEventListener("submit",event=>{event.preventDefault();const input=document.querySelector<HTMLInputElement>("#command")!;issue(input.value);input.value="";});
 canvas.addEventListener("click",()=>canvas.requestPointerLock()); document.addEventListener("mousemove",e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.002;pitch=Math.max(-1.35,Math.min(1.35,pitch-e.movementY*.002));});
-addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")return;keys.add(e.code);if(e.code==="KeyE"&&!e.repeat)interactNearby();if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom();}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
+addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")return;keys.add(e.code);if(e.code==="KeyE"&&!e.repeat)interactNearby();if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom(undefined,true);}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
 let last=performance.now(), transitionCooldown=0;
-function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{camera.position.set(THREE.MathUtils.clamp(proposed.x,-8.5,8.5),1.7,THREE.MathUtils.clamp(proposed.z,-8.5,8.5));}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>x.position.distanceTo(camera.position.clone().setY(0))<1.05);if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
+function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{camera.position.set(THREE.MathUtils.clamp(proposed.x,-8.5,8.5),1.7,THREE.MathUtils.clamp(proposed.z,-8.5,8.5));}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>horizontalTriggerReached(camera.position,x.position));if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
 
 async function boot(){try{const response=await fetch("/private/pendelhaven-v1.json",{cache:"no-store"});if(!response.ok)throw new Error(`fixture request failed (${response.status}). Run npm run prepare:fixture or the documented PowerShell command.`);world=validateWorld(await response.json());currentRoomId=world.fixture.primary_room_ids[0];renderer.setSize(innerWidth,innerHeight);buildRoom();requestAnimationFrame(frame);}catch(error){const box=document.querySelector<HTMLElement>("#error")!;box.hidden=false;box.textContent=`Unable to start\n\n${error instanceof Error?error.message:String(error)}`;}}
 void boot();

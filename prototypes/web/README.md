@@ -1,6 +1,6 @@
 # Three.js comparison prototype
 
-This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Rooms 3976 through 3982 form a modeled tutorial route with data-driven exits, entities, props, and ambient animation.
+This is the browser candidate for the Phase 5 engine comparison. It consumes the unchanged `mud2026.engine-neutral-world` `1.0.0` Pendelhaven export and renders one authoritative room at a time as a first-person chamber. Rooms 3976 through 3984 form a modeled tutorial route with data-driven exits, entities, props, and ambient animation.
 
 ## Setup
 
@@ -19,7 +19,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 
 - Click the chamber to capture the mouse; use mouse look and WASD movement. Room 3976 constrains movement at its modeled walls.
 - Aim the reticle at any spawned NPC or item to display its extracted description automatically. Approach and press `E` when an action prompt appears.
-- Walk close to an exit arch to follow that exact directed edge.
+- Walk close to an exit arch or vertical passage to follow that exact directed edge. After travel, the player appears just inside the arrival side and faces into the room.
 - Submit `look`, `examine old man`, `talk to old man`, `read parchment`, or `take parchment` to play room 3976 entirely through MUD-style commands.
 - Submit `n`, `s`, `e`, `w`, `ne`, `nw`, `se`, `sw`, `u`, `d`, or their full names to travel.
 - Submit `diagnose` in room 3976 for an in-game check of model loading, collision, targeting, commands, and the authoritative west exit.
@@ -28,14 +28,14 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - Multiple arches remain distinct for parallel same-direction edges. In the fixture, room 4057's west edge leads to 4058 and room 4058's west edge remains west; no inverse is invented.
 - NPCs and items appear as labeled red and amber markers using the fixture's room-keyed spawn records.
 - Room 3976 replaces its generic chamber with a generated stone training room. NPC 3993 and item 3985 load generated low-poly models, while the old man's circular ground marker remains for readability.
-- Each room from 3977 through 3982 has a distinct generated shell matching its extracted purpose. Only canonical graph exits receive openings and travel triggers.
-- Ambient motion is room-specific: start-room torch flicker, council recitation pulses, library dust, discarded-paper movement, wardroom knife glints, market-sign sway, and a pulsing practice ring with combat-responsive dummy motion.
+- Each room from 3977 through 3984 has a distinct generated shell matching its extracted purpose. Only canonical graph exits receive openings and travel triggers.
+- Ambient motion is room-specific: start-room torch flicker, council recitation pulses, library dust, discarded-paper movement, wardroom knife glints, market-sign sway, a pulsing practice ring with combat-responsive dummy motion, glowing dais symbols, and an altar light.
 - Every canonical NPC/mob on the route (3993–3998) has a full-body description-driven GLB: the old official, three distinct language instructors, the lazy halberd guard, and the rag-draped wooden dummy. Their idle motion matches their role while circular ground rings preserve gameplay readability.
-- The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
+- The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. Continue `E, U` across the symbol-covered dais to reach room 3984's advancement altar. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
 
 ## Initial room models
 
-The committed GLB assets in `public/models/generated/` are original procedural models generated with Blender 5.2. Regenerate the start-room assets and the six remaining route rooms with:
+The committed GLB assets in `public/models/generated/` are original procedural models generated with Blender 5.2. Regenerate the start-room assets and the eight remaining route rooms with:
 
 ```powershell
 cd C:\code\Mud2026
@@ -46,7 +46,7 @@ cd C:\code\Mud2026
 
 The generators write ignored previews under `var/previews/`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.
 
-Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3982 add a small in-memory inventory and deterministic practice-dummy combat. Other rooms remain comparison-prototype chambers. Door open/lock state, general NPC AI, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
+Room 3976 is a functional tutorial-room vertical slice with collision boundaries, gaze/proximity interaction, canonical descriptions, tutorial progress, text-command equivalents, and westward travel. The exported rooms through 3984 add a small in-memory inventory, deterministic practice-dummy combat, and working vertical traversal between the enlightenment dais and advancement altar. Other rooms remain comparison-prototype chambers. Door open/lock state, general NPC AI, persistence, and full-world geometry are not yet implemented. Command travel chooses the first canonical edge when multiple visible edges share a direction; walking through labeled arches disambiguates them.
 
 ## Verification
 

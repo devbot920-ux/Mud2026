@@ -121,13 +121,37 @@ def room_3982() -> Path:
     return export_glb("practice_arena_3982.glb")
 
 
+def room_3983() -> Path:
+    clear(); floor, wall, trim = shell(3983, {"W"}, ((.16,.15,.18,1),(.25,.23,.29,1),(.52,.43,.22,1)))
+    dais=material("Enlightenment dais stone",(.34,.31,.39,1),roughness=.82);symbol=material("Advancement symbols",(.72,.48,.09,1),metallic=.42,roughness=.38);dark=material("Upper passage shadow",(.018,.02,.028,1),roughness=1)
+    for i in range(7):
+        x=.45+i*.52;z=-.45-i*.52;height=.12+i*.13
+        rotated_cube("Rising dais step",(x,height/2,z),(4.0,height,.72),dais,math.pi/4,.05)
+        rotated_cube("Dais symbol",(x,height+.025,z),(.44,.045,.3),symbol,math.pi/4+i*.08,.02)
+    rotated_cube("Upper dais platform",(3.75,1.08,-3.75),(4.2,.35,4.2),dais,math.pi/4,.08)
+    rotated_cube("Upward opening",(4.65,2.25,-4.65),(2.5,3.0,.12),dark,math.pi/4,0)
+    for offset in (-1.55,1.55): rotated_cube("Dais rail",(3.75+offset*.7,1.75,-3.75+offset*.7),(.16,1.5,3.6),trim,math.pi/4,.04)
+    return export_glb("enlightenment_dais_3983.glb")
+
+
+def room_3984() -> Path:
+    clear(); floor, wall, trim = shell(3984, {"SE"}, ((.20,.18,.14,1),(.31,.28,.23,1),(.62,.48,.22,1)))
+    altar=material("Advancement altar",(.55,.48,.35,1),roughness=.7);gold=material("Altar inscriptions",(.82,.58,.12,1),metallic=.5,roughness=.3);dark=material("Descending stairwell",(.015,.018,.022,1),roughness=1)
+    cube("Altar lower plinth",(0,.3,-1.2),(4.6,.6,3.2),altar,.12);cube("Altar upper plinth",(0,.78,-1.2),(3.4,.42,2.2),altar,.1);cube("Sacred altar table",(0,1.42,-1.2),(2.6,.9,1.45),altar,.1)
+    for x in (-.72,0,.72):cube("Glowing altar inscription",(x,1.89,-.46),(.42,.06,.22),gold,.03)
+    cube("Down stairwell shadow",(-3.7,.05,3.7),(2.4,.08,2.4),dark,.08)
+    for i in range(4):cube("Descending step",(-3.7+i*.3,.12+i*.08,3.7-i*.3),(2.2,.18,.62),trim,.04)
+    for x in (-5.2,5.2):cube("Altar column",(x,2.1,-4.9),(.55,4.2,.55),trim,.08)
+    return export_glb("advancement_altar_3984.glb")
+
+
 def render_preview(paths: list[Path]):
     clear()
-    offsets=((-22,11),(0,11),(22,11),(-22,-11),(0,-11),(22,-11))
+    offsets=((-33,11),(-11,11),(11,11),(33,11),(-33,-11),(-11,-11),(11,-11),(33,-11))
     for path,(x,y) in zip(paths,offsets):
         bpy.ops.import_scene.gltf(filepath=str(path)); imported=list(bpy.context.selected_objects)
         for obj in imported: obj.location += Vector((x,y,0))
-    bpy.ops.object.camera_add(location=(39,-49,41)); camera=bpy.context.object; camera.data.lens=38
+    bpy.ops.object.camera_add(location=(48,-58,48)); camera=bpy.context.object; camera.data.lens=42
     camera.rotation_euler=(Vector((0,0,0))-camera.location).to_track_quat("-Z","Y").to_euler(); bpy.context.scene.camera=camera
     bpy.ops.object.light_add(type="AREA",location=(0,-5,35)); bpy.context.object.data.energy=3200; bpy.context.object.data.size=35
     scene=bpy.context.scene; scene.render.engine="BLENDER_EEVEE"; scene.render.resolution_x=1400; scene.render.resolution_y=800; scene.render.resolution_percentage=100; scene.render.image_settings.file_format="PNG"
@@ -135,7 +159,7 @@ def render_preview(paths: list[Path]):
 
 
 def main():
-    paths=[room_3977(),room_3978(),room_3979(),room_3980(),room_3981(),room_3982()]
+    paths=[room_3977(),room_3978(),room_3979(),room_3980(),room_3981(),room_3982(),room_3983(),room_3984()]
     render_preview(paths)
     print("Generated route rooms:",*(str(path) for path in paths),str(PREVIEW),sep="\n")
 

@@ -1,4 +1,4 @@
-export type RouteAnimation = "torch"|"speech"|"dust"|"scraps"|"glints"|"signs"|"arena";
+export type RouteAnimation = "torch"|"speech"|"dust"|"scraps"|"glints"|"signs"|"arena"|"dais"|"altar";
 
 export const TRAINING_ROUTE_MODELS: Readonly<Record<number,{path:string;animation:RouteAnimation;background:number;light:number}>>={
   3976:{path:"/models/generated/training_room_3976.glb",animation:"torch",background:0x07090b,light:0xffb45c},
@@ -8,6 +8,8 @@ export const TRAINING_ROUTE_MODELS: Readonly<Record<number,{path:string;animatio
   3980:{path:"/models/generated/wardroom_3980.glb",animation:"glints",background:0x090807,light:0xffc07a},
   3981:{path:"/models/generated/traders_pit_3981.glb",animation:"signs",background:0x100a05,light:0xffa34c},
   3982:{path:"/models/generated/practice_arena_3982.glb",animation:"arena",background:0x0d0706,light:0xff7655},
+  3983:{path:"/models/generated/enlightenment_dais_3983.glb",animation:"dais",background:0x090711,light:0xb79cff},
+  3984:{path:"/models/generated/advancement_altar_3984.glb",animation:"altar",background:0x100c05,light:0xffd36f},
 };
 
 export function trainingRouteModel(roomId:number){return TRAINING_ROUTE_MODELS[roomId];}
