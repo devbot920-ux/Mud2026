@@ -30,6 +30,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - Room 3976 replaces its generic chamber with a generated stone training room. NPC 3993 and item 3985 load generated low-poly models, while the old man's circular ground marker remains for readability.
 - Each room from 3977 through 3982 has a distinct generated shell matching its extracted purpose. Only canonical graph exits receive openings and travel triggers.
 - Ambient motion is room-specific: start-room torch flicker, council recitation pulses, library dust, discarded-paper movement, wardroom knife glints, market-sign sway, and a pulsing practice ring with combat-responsive dummy motion.
+- Every canonical NPC/mob on the route (3993–3998) has a full-body description-driven GLB: the old official, three distinct language instructors, the lazy halberd guard, and the rag-draped wooden dummy. Their idle motion matches their role while circular ground rings preserve gameplay readability.
 - The nearby training route is playable: `W, W, NW, N` reaches room 3980, where `GET KNIFE` (or `E`) adds a knife to inventory. `NE, E` then reaches room 3982, where `ATTACK DUMMY`, `A DUMMY`, or `E` begins timed practice combat. `STOP` disengages and `INVENTORY`/`I` lists carried equipment.
 
 ## Initial room models
@@ -40,6 +41,7 @@ The committed GLB assets in `public/models/generated/` are original procedural m
 cd C:\code\Mud2026
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_initial_room_models.py
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_training_route_models.py
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python prototypes\web\tools\generate_training_characters.py
 ```
 
 The generators write ignored previews under `var/previews/`. Model loading is generation-guarded so a slow request cannot insert assets from a room the player has already left.

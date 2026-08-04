@@ -5,6 +5,7 @@ import { commandDirection, edgesFrom, field, travel, validateWorld, type Edge, t
 import { INITIAL_ROOM_ID, constrainInitialRoomMovement, findInitialRoomTarget, initialRoomCommand, type InitialRoomAction } from "./room3976";
 import { findFacingEntity, gameplayCommand, practiceDamage } from "./gameplay";
 import { trainingRouteModel, type RouteAnimation } from "./routeModels";
+import { tutorialCharacterModel, type CharacterAnimation } from "./characterModels";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -16,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 80
 const chamber = new THREE.Group(); scene.add(chamber);
 const modelLoader = new GLTFLoader();
 const loadedModels = new Set<string>();
-scene.add(new THREE.HemisphereLight(0x8ba7b5, 0x251a0e, 1.6));
+const skyLight=new THREE.HemisphereLight(0x8ba7b5, 0x251a0e, 1.6);scene.add(skyLight);
 const torch = new THREE.PointLight(0xffb45c, 40, 24); torch.position.set(0, 3.2, 0); torch.castShadow = true; scene.add(torch);
 
 let world: World; let currentRoomId = INITIAL_ROOM_ID; let showHidden = false; let developerVisible = false;
@@ -33,6 +34,8 @@ let activeEntityId: number|undefined, activeNearbyEntityId:number|undefined; let
 let combatTargetId: number|undefined, dummyHealth=30, combatClock=0;
 interface AmbientMotion {object:THREE.Object3D;kind:RouteAnimation;phase:number;baseY:number}
 const ambientMotions:AmbientMotion[]=[]; let dummyVisual:THREE.Group|undefined;
+interface CharacterMotion {id:number;root:THREE.Group;head?:THREE.Object3D;kind:CharacterAnimation;baseY:number;baseRotationY:number}
+const characterMotions:CharacterMotion[]=[];
 
 const positions: Record<string, THREE.Vector3> = {
   N: new THREE.Vector3(0,0,-8), NE:new THREE.Vector3(5.65,0,-5.65), E:new THREE.Vector3(8,0,0), SE:new THREE.Vector3(5.65,0,5.65),
@@ -56,7 +59,6 @@ async function addModel(path: string, generation: number, configure?: (model: TH
 }
 
 function addKnifeModel(position:THREE.Vector3){const group=new THREE.Group();const blade=new THREE.Mesh(new THREE.BoxGeometry(.12,.06,.85),material(0xc7ced0,.3));blade.position.z=-.24;const handle=new THREE.Mesh(new THREE.BoxGeometry(.2,.12,.38),material(0x5b351c,.8));handle.position.z=.37;group.add(blade,handle);group.position.copy(position).setY(.3);group.rotation.y=.55;group.traverse(o=>{if(o instanceof THREE.Mesh)o.castShadow=true;});chamber.add(group);}
-function addDummyModel(position:THREE.Vector3){const group=new THREE.Group();const wood=material(0x8a5b2d,.9);const post=new THREE.Mesh(new THREE.CylinderGeometry(.16,.2,2.7,10),wood);post.position.y=1.35;const arms=new THREE.Mesh(new THREE.BoxGeometry(2.1,.18,.18),wood);arms.position.y=1.85;const head=new THREE.Mesh(new THREE.SphereGeometry(.38,10,8),wood);head.position.y=2.75;const base=new THREE.Mesh(new THREE.BoxGeometry(1.5,.16,1.1),wood);base.position.y=.08;group.add(post,arms,head,base);group.position.copy(position).setY(0);group.traverse(o=>{if(o instanceof THREE.Mesh)o.castShadow=true;});chamber.add(group);dummyVisual=group;}
 
 function trackAmbient(object:THREE.Object3D,kind:RouteAnimation,phase=0){chamber.add(object);ambientMotions.push({object,kind,phase,baseY:object.position.y});}
 function addRoomAnimation(kind:RouteAnimation){
@@ -67,7 +69,7 @@ function addRoomAnimation(kind:RouteAnimation){
   else if(kind==="signs")for(const [index,x] of [-4.2,4.2].entries()){const pivot=new THREE.Group();pivot.position.set(x,3.0,-.05);const sign=new THREE.Mesh(new THREE.BoxGeometry(1.7,.72,.08),new THREE.MeshStandardMaterial({color:index?0x315889:0x8b3126,roughness:.8}));sign.position.y=-.42;pivot.add(sign);trackAmbient(pivot,kind,index*1.3);}
   else if(kind==="arena"){const ring=new THREE.Mesh(new THREE.TorusGeometry(3.8,.045,7,48),new THREE.MeshBasicMaterial({color:0xd65a42,transparent:true,opacity:.45}));ring.rotation.x=Math.PI/2;ring.position.y=.04;trackAmbient(ring,kind,0);}
 }
-function animateRoom(now:number){const t=now/1000;torch.intensity=currentRoomId===INITIAL_ROOM_ID?36+Math.sin(t*9)*4+Math.sin(t*17)*2:25;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="speech"){o.position.y=motion.baseY+Math.sin(t*2.2+p)*.18;o.rotation.z=t*.45+p;}else if(motion.kind==="dust"){o.position.y=.25+((motion.baseY+t*.18+p)%4.1);o.position.x+=Math.sin(t*.5+p)*.0008;}else if(motion.kind==="scraps"){o.position.y=motion.baseY+.08+Math.sin(t*1.5+p)*.09;o.rotation.x=t*.35+p;o.rotation.y=t*.22+p;}else if(motion.kind==="glints"){const s=.35+Math.max(0,Math.sin(t*3+p))*1.2;o.scale.setScalar(s);}else if(motion.kind==="signs")o.rotation.z=Math.sin(t*.85+p)*.075;else if(motion.kind==="arena"){const s=1+Math.sin(t*1.7)*.018;o.scale.setScalar(s);}}if(dummyVisual)dummyVisual.rotation.z=combatTargetId===3998?Math.sin(t*13)*.028:THREE.MathUtils.lerp(dummyVisual.rotation.z,0,.08);}
+function animateRoom(now:number){const t=now/1000;torch.intensity=currentRoomId===INITIAL_ROOM_ID?36+Math.sin(t*9)*4+Math.sin(t*17)*2:25;for(const motion of ambientMotions){const o=motion.object,p=motion.phase;if(motion.kind==="speech"){o.position.y=motion.baseY+Math.sin(t*2.2+p)*.18;o.rotation.z=t*.45+p;}else if(motion.kind==="dust"){o.position.y=.25+((motion.baseY+t*.18+p)%4.1);o.position.x+=Math.sin(t*.5+p)*.0008;}else if(motion.kind==="scraps"){o.position.y=motion.baseY+.08+Math.sin(t*1.5+p)*.09;o.rotation.x=t*.35+p;o.rotation.y=t*.22+p;}else if(motion.kind==="glints"){const s=.35+Math.max(0,Math.sin(t*3+p))*1.2;o.scale.setScalar(s);}else if(motion.kind==="signs")o.rotation.z=Math.sin(t*.85+p)*.075;else if(motion.kind==="arena"){const s=1+Math.sin(t*1.7)*.018;o.scale.setScalar(s);}}for(const motion of characterMotions){motion.root.position.y=motion.baseY;if(motion.kind==="slump")motion.root.rotation.z=-.07+Math.sin(t*.7)*.018;else if(motion.kind==="gossip")motion.root.rotation.y=motion.baseRotationY+Math.sin(t*.9)*.28;else if(motion.kind==="whisper")motion.root.position.y=motion.baseY+Math.sin(t*1.2)*.025;else if(motion.kind==="nod"&&motion.head)motion.head.rotation.x=Math.sin(t*2.25)*.16;else if(motion.kind==="lean")motion.root.rotation.z=.08+Math.sin(t*.55)*.018;}if(dummyVisual)dummyVisual.rotation.z=combatTargetId===3998?Math.sin(t*13)*.045:THREE.MathUtils.lerp(dummyVisual.rotation.z,0,.08);}
 
 function marker(entity: Entity, kind: "npc"|"item", index: number, generation: number, count: number) {
   const color = kind === "npc" ? 0xa94d3c : 0xc3a44d; const radius = kind === "npc" ? .42 : .25;
@@ -76,18 +78,18 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
   const knownPosition = entity.id === 3993 ? new THREE.Vector3(2.7, radius, -7.15) : entity.id === 3985 ? new THREE.Vector3(-2.6, 2.05, -8.55) : defaultPosition;
   mesh.position.copy(knownPosition); mesh.castShadow = true; chamber.add(mesh);
   roomInteractions.push({id:entity.id,entity,kind,position:knownPosition.clone(),count,x:knownPosition.x,z:knownPosition.z});
-  const label = sprite(`${kind.toUpperCase()} · ${field(entity,"short_description",String(entity.id))}${count>1?` ×${count}`:""}`); label.position.copy(mesh.position).add(new THREE.Vector3(0,1,0)); chamber.add(label);
-  if (entity.id === 3993) {
+  const character=tutorialCharacterModel(entity.id);
+  const label = sprite(`${kind.toUpperCase()} · ${field(entity,"short_description",String(entity.id))}${count>1?` ×${count}`:""}`); label.position.copy(mesh.position).add(new THREE.Vector3(0,character?3.05:1,0)); chamber.add(label);
+  if (character) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(.72,.07,8,32),new THREE.MeshBasicMaterial({color:0xe56b50}));
-    ring.rotation.x = Math.PI / 2; ring.position.set(2.7,.04,-7.15); chamber.add(ring);
+    ring.rotation.x = Math.PI / 2; ring.position.set(knownPosition.x,.04,knownPosition.z); chamber.add(ring);
     mesh.visible = false;
-    void addModel("/models/generated/old_man_3993.glb", generation, model => model.position.set(2.7,0,-7.15));
+    void addModel(character.path,generation,model=>{model.position.set(knownPosition.x,0,knownPosition.z);model.rotation.y=Math.atan2(-knownPosition.x,-knownPosition.z);const motion={id:entity.id,root:model,head:model.getObjectByName("Head"),kind:character.animation,baseY:0,baseRotationY:model.rotation.y};characterMotions.push(motion);if(entity.id===3998)dummyVisual=model;});
   } else if (entity.id === 3985) {
     mesh.visible = false;
     label.position.set(-2.6,3.25,-8.35);
     void addModel("/models/generated/old_parchment_3985.glb", generation, model => { model.position.set(-2.6,2.05,-8.55); model.rotation.y = Math.PI; });
   } else if(entity.id===72){mesh.visible=false;addKnifeModel(knownPosition);}
-  else if(entity.id===3998){mesh.visible=false;addDummyModel(knownPosition);}
 }
 
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
@@ -149,12 +151,14 @@ function runInitialRoomDiagnostics() {
 }
 
 function buildRoom() {
-  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;dummyVisual=undefined;camera.position.set(0,1.7,0);
+  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;camera.position.set(0,1.7,0);
   if(currentRoomId!==3982){combatTargetId=undefined;combatClock=0;}else if(dummyHealth<=0)dummyHealth=30;
   const modeledRoom=trainingRouteModel(currentRoomId);
   if (modeledRoom) {
+    scene.background=new THREE.Color(modeledRoom.background);scene.fog=new THREE.Fog(modeledRoom.background,12,29);torch.color.setHex(modeledRoom.light);skyLight.intensity=1.55;
     void addModel(modeledRoom.path, generation);
   } else {
+    scene.background=new THREE.Color(0x07090b);scene.fog=new THREE.Fog(0x07090b,12,29);torch.color.setHex(0xffb45c);skyLight.intensity=1.6;
     addBox(new THREE.Vector3(18,.3,18), new THREE.Vector3(0,-.18,0),0x3b3427); addBox(new THREE.Vector3(18,.3,18),new THREE.Vector3(0,5.1,0),0x24272a);
   }
   const visible = edgesFrom(world,currentRoomId,showHidden); const groups = new Map<string,Edge[]>();
