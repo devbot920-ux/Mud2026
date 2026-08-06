@@ -18,7 +18,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 ## Controls and behavior
 
 - Create a named Human, Elf, Dwarf, or Kobold adventurer and choose Warrior, Rogue, Mage, or Cleric. Each combination has different health, endurance, damage, and armor.
-- Third-person is the default. Click the chamber to capture the mouse, use mouse look and WASD movement, and press `V` to toggle first-person.
+- Third-person is the default. Click the chamber to capture the mouse, use mouse look and WASD movement, tap `V` to toggle first-person, or hold `V` and use the mouse wheel to adjust third-person distance.
 - Hold `Shift` while moving to sprint. Sprinting animates the avatar, increases speed, and drains endurance; walking or resting restores it.
 - Aim the reticle at any spawned NPC or item to display its extracted description automatically. Approach and press `E` when an action prompt appears.
 - Walk close to an exit arch or vertical passage to follow that exact directed edge. After travel, the player appears just inside the arrival side and faces into the room.
