@@ -118,3 +118,10 @@ Hands-on feedback selected the web prototype as the most usable of the three eng
 - Status: Accepted
 
 Character creation and UI terminology will follow recovered HEL1 evidence: six races, six starting walks of life, eight attributes, and prime-requisite proficiencies. Until original formulas and exact record fields are decoded, numerical race/walk modifiers, derived-stat formulas, starter skills, loot weights, and bonuses remain deterministic prototype rules. They must be tested and labeled as such rather than presented as recovered facts.
+
+## D-017 — Export source-decoded spells privately and isolate incomplete formulas
+
+- Date: 2026-08-06
+- Status: Accepted
+
+Spell records are exported from `RCI_SPEL.db` through a tracked immutable/read-only decoder into ignored private JSON. Exact recovered mana, success-threshold, effect-handler, damage-dice, healing-dice, and base-delay fields drive gameplay. Incomplete delay helpers, walk-number mapping, starter spell ownership, starting sphere proficiency, and undecoded item damage values remain small isolated prototype rules with tests and visible UI disclosure.

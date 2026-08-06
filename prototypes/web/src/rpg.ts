@@ -4,7 +4,7 @@ export type EquipmentSlot="weapon"|"armor";
 export type EquipmentId="training-knife"|"kobold-dagger"|"thug-jerkin"|"guard-hammer"|"slug-hide";
 export type AttributeName="strength"|"wisdom"|"dexterity"|"constitution"|"intelligence"|"charisma"|"comeliness"|"perception";
 
-export interface Equipment {id:EquipmentId;name:string;description:string;slot:EquipmentSlot;weight:number;damage?:number;armor?:number}
+export interface Equipment {id:EquipmentId;name:string;description:string;slot:EquipmentSlot;weight:number;damage?:number;damageMin?:number;requirement?:number;armor?:number}
 export type CharacterAttributes=Record<AttributeName,number>;
 export interface CharacterStats {maxHealth:number;maxEndurance:number;maxMana:number;baseDamage:number;armor:number;carryCapacity:number;attackInterval:number}
 export interface CharacterSkill {name:string;raw:number;adjusted:number;prime:AttributeName}
@@ -15,10 +15,10 @@ export const ATTRIBUTE_NAMES:readonly AttributeName[]=["strength","dexterity","c
 export const RACES:readonly PlayerRace[]=["Human","Elf","Dwarf","Gnome","Giant","Fairfolk"];
 export const CLASSES:readonly PlayerClass[]=["Warrior","Scholar","Gypsy","Priest","Mage","Archtypical"];
 export const EQUIPMENT:Readonly<Record<EquipmentId,Equipment>>={
-  "training-knife":{id:"training-knife",name:"training knife",description:"A balanced practice blade taken from the Pendelhaven training route.",slot:"weapon",weight:3,damage:5},
-  "kobold-dagger":{id:"kobold-dagger",name:"kobold dagger",description:"A chipped but quick dagger recovered from a kobold.",slot:"weapon",weight:4,damage:8},
+  "training-knife":{id:"training-knife",name:"training knife",description:"A balanced practice blade taken from the Pendelhaven training route.",slot:"weapon",weight:3,damageMin:3,damage:7,requirement:8},
+  "kobold-dagger":{id:"kobold-dagger",name:"kobold dagger",description:"A chipped but quick dagger recovered from a kobold.",slot:"weapon",weight:4,damageMin:5,damage:11,requirement:12},
   "thug-jerkin":{id:"thug-jerkin",name:"kobold leather jerkin",description:"Layered leather that absorbs a modest amount of punishment.",slot:"armor",weight:12,armor:3},
-  "guard-hammer":{id:"guard-hammer",name:"kobold guard hammer",description:"A heavy guard hammer with a punishing iron head.",slot:"weapon",weight:9,damage:12},
+  "guard-hammer":{id:"guard-hammer",name:"kobold guard hammer",description:"A heavy guard hammer with a punishing iron head.",slot:"weapon",weight:9,damageMin:8,damage:12,requirement:18},
   "slug-hide":{id:"slug-hide",name:"hardened slug hide",description:"Cured hide from a giant slug, fashioned into flexible protection.",slot:"armor",weight:7,armor:2},
 };
 
@@ -67,6 +67,16 @@ export function gainExperience(current:Progression,amount:number):{progression:P
 }
 
 export function attackDamage(stats:CharacterStats,weapon?:Equipment):number{return stats.baseDamage+(weapon?.damage??0);}
+export interface MeleeAttack {hit:boolean;roll:number;chance:number;damage:number}
+export function resolveMeleeAttack(race:PlayerRace,playerClass:PlayerClass,level:number,weapon:Equipment|undefined,targetArmor:number,carriedWeight:number,random=Math.random):MeleeAttack{
+  const stats=characterStats(race,playerClass,level),skill=characterSkills(race,playerClass)[weapon?0:1].adjusted,requirement=weapon?.requirement??0;
+  // DLL shape: d100 to-hit adjusted by proficiency-vs-requirement, target AC,
+  // attack bonuses and one-third of over-encumbrance. Weapon fields remain unresolved.
+  const over=Math.max(0,carriedWeight-stats.carryCapacity),chance=Math.max(8,Math.min(95,55+skill-requirement-targetArmor*3-Math.floor(over/3))),roll=1+Math.floor(random()*100);
+  if(roll>chance)return {hit:false,roll,chance,damage:0};
+  const minimum=weapon?.damageMin??Math.max(1,Math.floor(stats.baseDamage/2)),maximum=weapon?.damage??stats.baseDamage,rolled=minimum+Math.floor(random()*(maximum-minimum+1));
+  return {hit:true,roll,chance,damage:rolled+Math.max(0,Math.floor((stats.baseDamage-2)/2))};
+}
 export function receivedDamage(rawDamage:number,stats:CharacterStats,armor?:Equipment):number{return Math.max(1,rawDamage-stats.armor-(armor?.armor??0));}
 export function effectiveArmor(stats:CharacterStats,armor?:Equipment):number{return stats.armor+(armor?.armor??0);}
 export function updateEndurance(current:number,max:number,seconds:number,running:boolean,moving:boolean):number{return Math.max(0,Math.min(max,current+seconds*(running?-18:moving?5:11)));}

@@ -1,5 +1,5 @@
 import {describe,expect,it} from "vitest";
-import {EQUIPMENT,attackDamage,characterAttributes,characterSkills,characterStats,equip,findEquipment,gainExperience,inventoryWeight,receivedDamage,rewardForMob,unequip,updateEndurance} from "../src/rpg";
+import {EQUIPMENT,attackDamage,characterAttributes,characterSkills,characterStats,equip,findEquipment,gainExperience,inventoryWeight,receivedDamage,resolveMeleeAttack,rewardForMob,unequip,updateEndurance} from "../src/rpg";
 
 describe("source-aligned character rules",()=>{
   it("models all eight Rose attributes",()=>expect(Object.keys(characterAttributes("Human","Archtypical"))).toHaveLength(8));
@@ -10,6 +10,7 @@ describe("source-aligned character rules",()=>{
 });
 
 describe("progression and inventory",()=>{
+  it("uses a proficiency d100 gate and ranged weapon roll",()=>{const hit=resolveMeleeAttack("Human","Warrior",1,EQUIPMENT["training-knife"],0,0,()=>0);expect(hit.hit).toBe(true);expect(hit.damage).toBeGreaterThanOrEqual(3);const miss=resolveMeleeAttack("Human","Warrior",1,EQUIPMENT["guard-hammer"],10,0,()=>.999);expect(miss.hit).toBe(false);});
   it("handles multiple level gains and carries excess experience",()=>expect(gainExperience({level:1,experience:90,nextLevelExperience:100},220)).toEqual({progression:{level:3,experience:10,nextLevelExperience:300},levelsGained:2}));
   it("adds weapon damage and reduces incoming damage with armor",()=>{const stats=characterStats("Human","Warrior");expect(attackDamage(stats,EQUIPMENT["guard-hammer"])).toBe(stats.baseDamage+12);expect(receivedDamage(10,stats,EQUIPMENT["thug-jerkin"])).toBe(5);});
   it("tracks carried weight and one equipped item per slot",()=>{expect(inventoryWeight(["training-knife","thug-jerkin"])).toBe(15);const armed=equip({},EQUIPMENT["training-knife"]);expect(equip(armed,EQUIPMENT["guard-hammer"]).weapon).toBe("guard-hammer");expect(unequip(armed,"weapon").weapon).toBeUndefined();});

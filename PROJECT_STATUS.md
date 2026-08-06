@@ -170,6 +170,17 @@ Phase 6 RPG-interface verification completed on 2026-08-06:
 - TypeScript check and Vite production build — passed
 - Automated localhost browser control was blocked by browser URL policy; no bypass was attempted
 
+Phase 6 combat/casting verification completed on 2026-08-06:
+
+- Read-only `RCI_SPEL.db` inspection decoded and privately exported all 97 fixed-width spell records
+- Decompiled DLL traces recovered d100 casting success, mana consumption, sphere proficiency deltas, inclusive spell damage dice, level-scaled healing dice, and bounded base recovery delay
+- The client now includes class starter spellbooks, casting UI/commands, mana/recovery, failure, spell damage, healing, proximity action buttons, range-based combat, hostile chase, exit blocking, sprint/flee escape, and eligible room-to-room pursuit
+- Melee now uses the confirmed proficiency/requirement, d100, armor, over-encumbrance, and damage-range structure; exact weapon record values remain explicit prototype balancing
+- Three.js Vitest suite — 83/83 tests passed across 11 files
+- Shared Python suite — 38/38 tests passed, including synthetic fixed-width spell decoding
+- TypeScript check and Vite production build — passed
+- Automated localhost browser control remained blocked by browser URL policy; no bypass was attempted
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
@@ -181,4 +192,4 @@ Phase 6 RPG-interface verification completed on 2026-08-06:
 
 ## Exact next task
 
-Hands-on check the new Pack, Character, and command/mouse controls in the running Three.js client. Next, decode the item weight/equipment requirement fields and implement Pendelhaven shop/currency interactions plus private save-state persistence.
+Hands-on check the spellbook, proximity buttons, hostile chase, exit blocking, sprint/flee escape, room-to-room pursuit, hit/miss feedback, healing, and spell damage. Next decode item damage/requirement fields and additional spell target flags/handlers, then implement Pendelhaven shops/currency and private save-state persistence.

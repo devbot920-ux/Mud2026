@@ -59,6 +59,17 @@ body.hurt::after { content:""; position:fixed; inset:0; pointer-events:none; box
 @keyframes hurt-flash { from{opacity:1} to{opacity:0} }
 #reticle { position: fixed; left: 50%; top: 50%; color: #fff9; font: 22px monospace; transform: translate(-50%,-50%); }
 #interaction-prompt { position: fixed; left: 50%; top: calc(50% + 32px); transform: translateX(-50%); padding: 7px 12px; color: #fff2c5; background: #111c; border: 1px solid #b79855; font: 13px ui-monospace, monospace; }
+#proximity-actions { position:fixed; z-index:8; left:50%; bottom:74px; transform:translateX(-50%); min-width:310px; max-width:min(680px,calc(100vw - 32px)); padding:9px 12px; text-align:center; background:#080c10d9; border:1px solid #8b7549; backdrop-filter:blur(6px); }
+#proximity-actions[hidden] { display:none; }
+#proximity-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin-top:5px; }
+#proximity-buttons button,.spell-card button { color:#f5e5b0; background:#202b31; border:1px solid #8d7545; padding:7px 11px; cursor:pointer; }
+#proximity-buttons button.danger { color:#ffd2c7; border-color:#ad4a3e; background:#371b18; }
+.spell-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+.spell-card { padding:14px; background:#ffffff08; border:1px solid #ffffff18; }
+.spell-card h3 { margin:0 0 7px; color:#ead294; }
+.spell-card p { min-height:42px; color:#bdb6a5; }
+.spell-meta { margin:8px 0; color:#8fb4c4; font:12px ui-monospace,monospace; }
+.spell-card button:disabled { opacity:.4; cursor:not-allowed; }
 #interaction-panel { position: fixed; right: 20px; bottom: 96px; width: min(440px, calc(100vw - 40px)); max-height: 42vh; overflow: auto; padding: 16px 18px; color: #ddd5bf; background: #11100eeb; border: 1px solid #997b43; box-shadow: 0 12px 35px #000b; white-space: pre-line; }
 #interaction-panel h2 { margin: 0 0 8px; color: #f1d99a; font-size: 18px; }
 #interaction-text { line-height: 1.55; }

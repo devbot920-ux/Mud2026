@@ -1,11 +1,11 @@
-export interface HostileStats {name:string;maxHealth:number;damage:number;attackInterval:number}
+export interface HostileStats {name:string;maxHealth:number;damage:number;attackInterval:number;armor:number}
 
 export const ARENA_ROSTER=[4003,129,4004,4006] as const;
 export const HOSTILE_STATS:Readonly<Record<number,HostileStats>>={
-  4003:{name:"giant slug",maxHealth:24,damage:3,attackInterval:1.65},
-  129:{name:"kobold",maxHealth:32,damage:4,attackInterval:1.35},
-  4004:{name:"kobold thug",maxHealth:44,damage:6,attackInterval:1.2},
-  4006:{name:"kobold guard",maxHealth:60,damage:8,attackInterval:1.05},
+  4003:{name:"giant slug",maxHealth:24,damage:3,attackInterval:1.65,armor:0},
+  129:{name:"kobold",maxHealth:32,damage:4,attackInterval:1.35,armor:1},
+  4004:{name:"kobold thug",maxHealth:44,damage:6,attackInterval:1.2,armor:2},
+  4006:{name:"kobold guard",maxHealth:60,damage:8,attackInterval:1.05,armor:4},
 };
 
 export function arenaOpponent(round:number):number{return ARENA_ROSTER[((round%ARENA_ROSTER.length)+ARENA_ROSTER.length)%ARENA_ROSTER.length];}

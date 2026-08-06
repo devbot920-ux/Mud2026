@@ -158,3 +158,30 @@ The ignored `var/exports/pendelhaven-v1.json` implements contract `mud2026.engin
 | Associated modifiers | 70 | Every non-base same-key MOD1 row for primary rooms and referenced entities |
 
 Of the 70 modifiers, 21 use a current interpreted/hypothesized tag and 49 retain unknown meaning. All retain complete private raw bytes and provenance. Decoded fields retain per-field confidence; tag-level Phase 3 hypotheses are not promoted to confirmed fields.
+
+## RCI_SPEL fixed-width records
+
+`RCI_SPEL.db` contains 97 fixed-width 405-byte spell records. `scripts/export_spell_fixture.py` opens the database immutable/read-only and writes the ignored `var/exports/spells-v1.json` contract. The following offsets are corroborated by casting consumers in `RCIROSE.DLL.c`:
+
+| Offset | Width | Meaning | Confidence |
+|---:|---:|---|---|
+| 0 | 80 | spell name, NUL-terminated | Confirmed |
+| 80 | 10 | command abbreviation | Confirmed |
+| 90 | 2 | spell ID, little-endian | Confirmed |
+| 332–333 | 1 each | primary / secondary sphere | Strong |
+| 336–337 | 1 each | primary / secondary proficiency requirement | Strong |
+| 338 | 1 | mana cost | Confirmed |
+| 339 | 1 | effect dispatch type | Strong |
+| 340 | 2 | base recovery delay | Strong |
+| 349+ | triplets spaced 8 bytes | effect numeric arguments | Strong per handler |
+| 389–397 | five signed 16-bit values | effect-handler indexes, `-1` sentinel | Strong |
+| 399–403 | 1 each | target flags | Tentative semantics |
+| 404 | 1 | damage type | Strong |
+
+Handler 0 (`_CAUSE_DAMAGE`) rolls the first triplet as `dice_count` independent inclusive rolls from `roll_min` through `roll_max`. Handler 1 (`_HEALING_HITPOINTS`) rolls caster-level dice whose inclusive bounds are the triplet's first and second values. `_CAST_EFFECTTYPE1` succeeds when d100 is no greater than `85 + casting bonus + proficiency delta`; `_CAST_SPELL` consumes the record's mana cost.
+
+`_SPELL_RDELAY` is confirmed to return no more than the record's base delay, but a helper in the decompile remains opaque. Client recovery reduction is therefore an isolated prototype approximation. Walk-number-to-name mapping, starter spell ownership, and initial sphere proficiency values also remain tentative/prototype rules.
+
+## Combat formula evidence
+
+`_GET_TOHIT` confirms a d100-shaped check involving adjusted weapon proficiency, weapon proficiency requirement, target armor class, attack bonuses, and a one-third over-encumbrance penalty. `_ATTACK_PVNPC` derives damage dice from opposing offense and defense pools, then calls the same inclusive `_ROLLDICE` helper with weapon-record bounds. Exact item damage-bound and requirement fields are not yet decoded, so the web client implements this confirmed structure with explicitly prototype-only equipment ranges and requirements.

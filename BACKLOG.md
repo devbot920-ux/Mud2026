@@ -65,6 +65,9 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Add a functional weighted inventory/equipment slice with explicit prototype-only item values
 - [x] Add NPC interaction and spawning from evidence-backed fixture fields
 - [x] Add graphical character, proficiency, inventory, and control-mode menus
+- [x] Decode the initial SPEL record layout and integrate source-backed casting success, mana, damage, healing, and delays
+- [x] Add proximity actions, in-room hostile pursuit, melee range, exit blocking, and eligible room-to-room pursuit
+- [x] Integrate the recovered melee d100/proficiency/encumbrance structure with clearly provisional weapon-record values
 - [ ] Decode item weight, equipment-location, proficiency requirement, and restriction fields to replace prototype values
 - [ ] Add shops, currency, buying/selling, and source-backed encumbrance penalties
 - [ ] Add private save-state persistence separate from canonical source data
@@ -73,5 +76,5 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 
 - [ ] Decode the ranked high-frequency unknown MOD1 tags
 - [ ] Trace DLL consumers from tag-level meanings to exact record fields
-- [ ] Decode INS1, SPEL, ACT1, NAM1, HEL1, and RAND
+- [ ] Decode INS1, ACT1, NAM1, HEL1, and RAND; continue SPEL targeting and non-damage handlers beyond the initial decoded layout
 - [x] Resolve the apparent 549/529 item mismatch as a one-byte tag-decoding collision (`0x0032` versus `0x0432`)
