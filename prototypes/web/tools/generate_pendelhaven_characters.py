@@ -15,7 +15,14 @@ from generate_initial_room_models import ROOT,clear,cube,cylinder,export_glb,mat
 PREVIEW=ROOT/"var"/"previews"/"pendelhaven-characters.png"
 
 def block(name,location,scale,mat,rotation=(0,0,0),bevel=.06):
-    obj=cube(name,location,scale,mat,bevel);obj.rotation_euler=rotation;return obj
+    obj=cube(name,location,scale,mat,bevel);obj.rotation_euler=rotation
+    for modifier in obj.modifiers:
+        if modifier.type=="BEVEL":modifier.segments=3
+    return obj
+
+def sphere(name,location,scale,mat):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=28,ring_count=18,radius=1,location=location)
+    obj=bpy.context.object;obj.name=name;obj.scale=scale;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);obj.data.materials.append(mat);bpy.ops.object.shade_smooth();return obj
 
 def palette():
     return {

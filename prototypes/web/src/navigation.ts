@@ -22,7 +22,7 @@ const OBSTACLES:Readonly<Record<number,readonly Rect[]>>={
   4167:[{minX:-5.8,maxX:5.8,minZ:-6.2,maxZ:-4.2}],
   4168:[{minX:3.5,maxX:6.8,minZ:-4.3,maxZ:-1.2}],
   4169:[{minX:-2.3,maxX:2.3,minZ:-2.8,maxZ:1.2}],
-  4171:[{minX:-6,maxX:6,minZ:-5.8,maxZ:-3.8}],
+  4171:[{minX:-6,maxX:-1.25,minZ:-5.8,maxZ:-3.8},{minX:1.25,maxX:6,minZ:-5.8,maxZ:-3.8}],
   4172:[{minX:-1.8,maxX:1.8,minZ:-1.8,maxZ:1.8}],
   4173:[{minX:-6.4,maxX:6.4,minZ:-6.3,maxZ:-4.2}],
 };

@@ -16,11 +16,24 @@
     </section>
     <aside id="developer"></aside>
     <aside id="player-status"></aside>
+    <section id="character-creation">
+      <form id="character-form">
+        <div class="eyebrow">CREATE YOUR ADVENTURER</div>
+        <h2>Enter Pendelhaven</h2>
+        <label>Name <input id="character-name" maxlength="20" value="Adventurer" /></label>
+        <div class="creation-grid">
+          <label>Race <select id="character-race"><option>Human</option><option>Elf</option><option>Dwarf</option><option>Kobold</option></select></label>
+          <label>Class <select id="character-class"><option>Warrior</option><option>Rogue</option><option>Mage</option><option>Cleric</option></select></label>
+        </div>
+        <p id="character-preview"></p>
+        <button type="submit">Begin adventure</button>
+      </form>
+    </section>
     <div id="reticle">+</div>
     <section id="interaction-panel" hidden><h2 id="interaction-title"></h2><div id="interaction-text"></div></section>
     <aside id="tutorial" hidden></aside>
     <div id="interaction-prompt" hidden></div>
-    <div id="help">Click to capture mouse · mouse look · WASD move · E interact/attack · approach an exit to travel · RING GONG in arena · H hidden exits · ` developer data</div>
+    <div id="help">Click + mouse look · WASD move · hold Shift to run · E interact/attack · V camera · RING GONG · EQUIP item · H hidden exits</div>
     <form id="command-form">
       <span>&gt;</span><input id="command" autocomplete="off" spellcheck="false" placeholder="look, examine old man, read parchment, west, diagnose…" /><button type="submit">Go</button>
     </form>

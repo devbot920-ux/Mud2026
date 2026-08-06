@@ -1,26 +1,38 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import {EffectComposer} from "three/addons/postprocessing/EffectComposer.js";
+import {RenderPass} from "three/addons/postprocessing/RenderPass.js";
+import {UnrealBloomPass} from "three/addons/postprocessing/UnrealBloomPass.js";
+import {OutputPass} from "three/addons/postprocessing/OutputPass.js";
 import "./style.css";
 import { commandDirection, edgesFrom, field, travel, validateWorld, type Edge, type Entity, type Room, type World } from "./model";
 import { INITIAL_ROOM_ID, constrainInitialRoomMovement, findInitialRoomTarget, initialRoomCommand, type InitialRoomAction } from "./room3976";
-import { attackTargetName, findFacingEntity, gameplayCommand, practiceDamage } from "./gameplay";
+import { attackTargetName, findFacingEntity, gameplayCommand } from "./gameplay";
 import { trainingRouteModel, type RouteAnimation } from "./routeModels";
 import { characterModel, type CharacterAnimation } from "./characterModels";
 import { constrainModeledMovement, entrySpawnAfterTravel, horizontalTriggerReached, modeledFloorHeight } from "./navigation";
-import { arenaOpponent, hostileStats, matchesHostileName, playerDamage } from "./combat";
+import { arenaOpponent, hostileStats, matchesHostileName } from "./combat";
+import {CLASSES,EQUIPMENT,RACES,attackDamage,characterStats,findEquipment,gainExperience,receivedDamage,rewardForMob,updateEndurance,type EquipmentId,type PlayerClass,type PlayerRace} from "./rpg";
+import {animatePlayerAvatar,createPlayerAvatar,setAvatarEquipment,type PlayerAvatar} from "./playerAvatar";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference:"high-performance" });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x07090b); scene.fog = new THREE.Fog(0x07090b, 12, 29);
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 80); camera.rotation.order = "YXZ";
+const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloomPass=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.24,.35,.84);composer.addPass(bloomPass);composer.addPass(new OutputPass());
 const chamber = new THREE.Group(); scene.add(chamber);
 const modelLoader = new GLTFLoader();
+const textureLoader=new THREE.TextureLoader();
+function surfaceTexture(path:string){const texture=textureLoader.load(path);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2.4,2.4);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=renderer.capabilities.getMaxAnisotropy();return texture;}
+const stoneTexture=surfaceTexture("/textures/generated/pendelhaven-stone-v1.png"),woodTexture=surfaceTexture("/textures/generated/pendelhaven-oak-v1.png");
 const loadedModels = new Set<string>();
 const skyLight=new THREE.HemisphereLight(0x8ba7b5, 0x251a0e, 1.6);scene.add(skyLight);
 const torch = new THREE.PointLight(0xffb45c, 40, 24); torch.position.set(0, 3.2, 0); torch.castShadow = true; scene.add(torch);
+const keyLight=new THREE.DirectionalLight(0xffe1b0,2.2);keyLight.position.set(-7,12,6);keyLight.castShadow=true;keyLight.shadow.mapSize.set(2048,2048);keyLight.shadow.camera.left=-12;keyLight.shadow.camera.right=12;keyLight.shadow.camera.top=12;keyLight.shadow.camera.bottom=-12;scene.add(keyLight);
 
 let world: World; let currentRoomId = INITIAL_ROOM_ID; let showHidden = false; let developerVisible = false;
 let yaw = 0, pitch = 0, roomGeneration = 0; const keys = new Set<string>(); const exitTriggers: { edge: Edge; position: THREE.Vector3 }[] = [];
@@ -30,15 +42,20 @@ const interactionPrompt = document.querySelector<HTMLElement>("#interaction-prom
 const interactionTitle = document.querySelector<HTMLElement>("#interaction-title")!; const interactionText = document.querySelector<HTMLElement>("#interaction-text")!;
 const tutorial = document.querySelector<HTMLElement>("#tutorial")!; const tutorialProgress = new Set<"look"|"old-man"|"parchment"|"west">();
 const playerStatus = document.querySelector<HTMLElement>("#player-status")!;
+const characterCreation=document.querySelector<HTMLElement>("#character-creation")!,characterForm=document.querySelector<HTMLFormElement>("#character-form")!,characterNameInput=document.querySelector<HTMLInputElement>("#character-name")!,characterRaceSelect=document.querySelector<HTMLSelectElement>("#character-race")!,characterClassSelect=document.querySelector<HTMLSelectElement>("#character-class")!,characterPreview=document.querySelector<HTMLElement>("#character-preview")!;
 interface RoomInteraction { id:number; entity: Entity; kind: "npc"|"item"; position: THREE.Vector3; count: number; x:number; z:number }
 const roomInteractions: RoomInteraction[]=[]; const inventory=new Set<number>();
 let activeEntityId: number|undefined, activeNearbyEntityId:number|undefined; let interactionPinned=false;
 let combatTargetId: number|undefined, dummyHealth=30, combatTargetHealth=0, combatClock=0, enemyCombatClock=0;
-let playerHealth=100,arenaRound=-1,arenaOpponentId:number|undefined,victories=0;
+let playerHealth=100,playerEndurance=100,arenaRound=-1,arenaOpponentId:number|undefined,victories=0;
+let characterCreated=false,playerName="Adventurer",playerRace:PlayerRace="Human",playerClass:PlayerClass="Warrior",progression={level:1,experience:0,nextLevelExperience:100};
+let equippedWeapon:EquipmentId|undefined,equippedArmor:EquipmentId|undefined;const ownedEquipment=new Set<EquipmentId>();const defeatedMobs=new Map<string,number>();
+let thirdPerson=true,playerAvatar:PlayerAvatar|undefined;const playerPosition=new THREE.Vector3(0,0,0);
 interface AmbientMotion {object:THREE.Object3D;kind:RouteAnimation;phase:number;baseY:number}
 const ambientMotions:AmbientMotion[]=[]; let dummyVisual:THREE.Group|undefined;
 interface CharacterMotion {id:number;root:THREE.Group;head?:THREE.Object3D;kind:CharacterAnimation;baseY:number;baseRotationY:number}
 const characterMotions:CharacterMotion[]=[];let activeHostileVisual:THREE.Group|undefined;
+const floatingCombatTexts:{sprite:THREE.Sprite;life:number}[]=[];
 const HOSTILE_IDS=new Set([129,4003,4004,4006]);
 
 const ENTITY_POSITIONS:Readonly<Record<number,{x:number;y:number;z:number}>>={
@@ -60,7 +77,7 @@ async function addModel(path: string, generation: number, configure?: (model: TH
   try {
     const gltf = await modelLoader.loadAsync(path);
     if (generation !== roomGeneration) return;
-    gltf.scene.traverse(object => { if (object instanceof THREE.Mesh) object.castShadow = object.receiveShadow = true; });
+    gltf.scene.traverse(object => { if (object instanceof THREE.Mesh){object.castShadow = object.receiveShadow = true;const originals=Array.isArray(object.material)?object.material:[object.material];const enhanced=originals.map(original=>{if(!(original instanceof THREE.MeshStandardMaterial))return original;const next=original.clone(),name=`${next.name} ${object.name}`.toLowerCase();if(/stone|wall|floor|marble|altar|dais|plaza|hearth|paving|masonry/.test(name)){next.map=stoneTexture;next.color.lerp(new THREE.Color(0xffffff),.58);next.roughness=Math.max(next.roughness,.72);}else if(/wood|oak|timber|counter|stage|shelf|table|rack|bar|desk|bench/.test(name)){next.map=woodTexture;next.color.lerp(new THREE.Color(0xffffff),.62);next.roughness=Math.max(next.roughness,.62);}next.needsUpdate=true;return next;});object.material=Array.isArray(object.material)?enhanced:enhanced[0];} });
     configure?.(gltf.scene);
     chamber.add(gltf.scene);
     loadedModels.add(path);
@@ -97,7 +114,7 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
   const color = kind === "npc" ? 0xa94d3c : 0xc3a44d; const radius = kind === "npc" ? .42 : .25;
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 12), material(color,.55));
   const angle = index * 2.2; const defaultPosition = new THREE.Vector3(Math.cos(angle) * 2.3, radius, Math.sin(angle) * 2.3);
-  const configured=ENTITY_POSITIONS[entity.id];const knownPosition=configured?new THREE.Vector3(configured.x,configured.y,configured.z):defaultPosition;
+  const configured=HOSTILE_IDS.has(entity.id)&&currentRoomId!==4168?undefined:ENTITY_POSITIONS[entity.id];const knownPosition=configured?new THREE.Vector3(configured.x,configured.y,configured.z):defaultPosition;
   mesh.position.copy(knownPosition); mesh.castShadow = true; chamber.add(mesh);
   roomInteractions.push({id:entity.id,entity,kind,position:knownPosition.clone(),count,x:knownPosition.x,z:knownPosition.z});
   const character=characterModel(entity.id);
@@ -116,12 +133,18 @@ function marker(entity: Entity, kind: "npc"|"item", index: number, generation: n
 }
 
 function sprite(text: string) { const c=document.createElement("canvas"); c.width=512;c.height=64; const x=c.getContext("2d")!; x.fillStyle="#070909cc";x.fillRect(0,0,512,64);x.fillStyle="#eadcae";x.font="25px sans-serif";x.textAlign="center";x.fillText(text.slice(0,38),256,41); const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true}));s.scale.set(4,.5,1);return s; }
+function spawnCombatText(text:string,color:string,position:THREE.Vector3){const canvas=document.createElement("canvas");canvas.width=256;canvas.height=96;const context=canvas.getContext("2d")!;context.font="bold 54px Arial";context.textAlign="center";context.strokeStyle="#080909";context.lineWidth=8;context.strokeText(text,128,62);context.fillStyle=color;context.fillText(text,128,62);const texture=new THREE.CanvasTexture(canvas),value=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));value.position.copy(position).add(new THREE.Vector3(0,2.8,0));value.scale.set(1.8,.68,1);chamber.add(value);floatingCombatTexts.push({sprite:value,life:1});}
+function animateCombatText(dt:number){for(let i=floatingCombatTexts.length-1;i>=0;i--){const effect=floatingCombatTexts[i];effect.life-=dt;effect.sprite.position.y+=dt*1.1;(effect.sprite.material as THREE.SpriteMaterial).opacity=Math.max(0,effect.life);if(effect.life<=0){chamber.remove(effect.sprite);floatingCombatTexts.splice(i,1);}}}
 
 function entity(id: number): Entity | undefined { return [...world.npcs,...world.items].find(candidate=>candidate.id===id); }
 const ARENA_GONG:Entity={id:-4168,stable_id:"interaction:arena-gong",fields:[{name:"short_description",value:"arena gong",confidence:"confirmed"},{name:"long_description",value:"A heavy brass gong used to summon a free arena opponent. Press E or type RING GONG.",confidence:"confirmed"}]};
+function currentCharacterStats(){return characterStats(playerRace,playerClass,progression.level);}
+function isMobDefeated(key:string){const until=defeatedMobs.get(key);if(until===undefined)return false;if(performance.now()<until)return true;defeatedMobs.delete(key);return false;}
+function rebuildPlayerAvatar(){if(playerAvatar)scene.remove(playerAvatar.root);playerAvatar=createPlayerAvatar(playerRace,playerClass);playerAvatar.root.position.copy(playerPosition);setAvatarEquipment(playerAvatar,equippedWeapon);scene.add(playerAvatar.root);}
+function updateCharacterPreview(){const race=(RACES.includes(characterRaceSelect.value as PlayerRace)?characterRaceSelect.value:"Human") as PlayerRace,playerClassValue=(CLASSES.includes(characterClassSelect.value as PlayerClass)?characterClassSelect.value:"Warrior") as PlayerClass,stats=characterStats(race,playerClassValue);characterPreview.textContent=`${stats.maxHealth} health · ${stats.maxEndurance} endurance · ${stats.baseDamage} base damage · ${stats.armor} armor`;}
 function cleanDescription(text:string){return text.replace(/\r/g,"\n").replace(/\n\s*\n\s*\d{4,}\s*\n[\s\S]*$/," ").trim();}
 function showInteraction(heading: string, text: string, pinned=true) { interactionPinned=pinned;interactionTitle.textContent=heading; interactionText.textContent=cleanDescription(text); interactionPanel.hidden=false; }
-function renderPlayerStatus(){const stats=combatTargetId?hostileStats(combatTargetId):undefined;playerStatus.textContent=[`HEALTH · ${playerHealth}/100 HP`,`INVENTORY · ${inventory.has(72)?"knife":"empty"}`,stats?`COMBAT · ${stats.name} ${combatTargetHealth}/${stats.maxHealth} HP`:combatTargetId===3998?`COMBAT · wooden dummy ${dummyHealth}/30 HP`:"COMBAT · peaceful",`ARENA VICTORIES · ${victories}`].join("\n");}
+function renderPlayerStatus(){const stats=currentCharacterStats(),hostile=combatTargetId?hostileStats(combatTargetId):undefined;playerStatus.replaceChildren();const titleLine=document.createElement("div");titleLine.className="hud-title";titleLine.textContent=`${playerName} · Level ${progression.level} ${playerRace} ${playerClass}`;playerStatus.append(titleLine);const meter=(label:string,value:number,max:number,kind:string)=>{const row=document.createElement("div");row.className="hud-row";const left=document.createElement("span"),right=document.createElement("span");left.textContent=label;right.textContent=`${Math.ceil(value)}/${max}`;row.append(left,right);const track=document.createElement("div");track.className=`meter ${kind}`;const fill=document.createElement("i");fill.style.width=`${Math.max(0,Math.min(100,value/max*100))}%`;track.append(fill);playerStatus.append(row,track);};meter("HEALTH",playerHealth,stats.maxHealth,"health");meter("ENDURANCE",playerEndurance,stats.maxEndurance,"endurance");meter("EXPERIENCE",progression.experience,progression.nextLevelExperience,"experience");const gear=document.createElement("div");gear.className="hud-row";gear.textContent=`Weapon: ${equippedWeapon?EQUIPMENT[equippedWeapon].name:"fists"} · Armor: ${equippedArmor?EQUIPMENT[equippedArmor].name:"clothes"}`;playerStatus.append(gear);const combat=document.createElement("div");combat.className="hud-row";combat.textContent=hostile?`Fighting ${hostile.name} ${combatTargetHealth}/${hostile.maxHealth}`:combatTargetId===3998?`Dummy ${dummyHealth}/30`:"Peaceful";playerStatus.append(combat);}
 function renderTutorial() {
   tutorial.hidden=currentRoomId!==INITIAL_ROOM_ID;
   if(tutorial.hidden)return;
@@ -139,20 +162,20 @@ function performInitialRoomAction(action: InitialRoomAction) {
 }
 function interactNearby() {
   const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));
-  const target=findFacingEntity({x:camera.position.x,z:camera.position.z},{x:forward.x,z:forward.z},roomInteractions);
+  const target=findFacingEntity({x:playerPosition.x,z:playerPosition.z},{x:forward.x,z:forward.z},roomInteractions);
   if(target)interactEntity(target);else renderUi("Nothing is close enough to interact with.");
 }
 function interactEntity(target:RoomInteraction){
   if(target.entity.id===3993)return performInitialRoomAction("inspect-old-man");
   if(target.entity.id===3985)return performInitialRoomAction("read-parchment");
-  if(target.entity.id===72){inventory.add(72);showInteraction("You take a knife",field(target.entity,"long_description","You take one of the knives."));renderPlayerStatus();return;}
+  if(target.entity.id===72){inventory.add(72);ownedEquipment.add("training-knife");equippedWeapon="training-knife";if(playerAvatar)setAvatarEquipment(playerAvatar,equippedWeapon);showInteraction("You equip a training knife",field(target.entity,"long_description","You take one of the knives."));renderPlayerStatus();return;}
   if(target.entity.id===3998)return startDummyCombat();
   if(target.entity.id===ARENA_GONG.id)return ringArenaGong();
   if(HOSTILE_IDS.has(target.entity.id))return startHostileCombat(target.entity.id);
   showInteraction(field(target.entity,"short_description",String(target.entity.id)),field(target.entity,"long_description","You see nothing unusual."));
 }
 function updateInteractionPrompt(forward: THREE.Vector3) {
-  const position={x:camera.position.x,z:camera.position.z},direction={x:forward.x,z:forward.z};
+  const position={x:playerPosition.x,z:playerPosition.z},direction={x:forward.x,z:forward.z};
   const target=findFacingEntity(position,direction,roomInteractions,9); const nearby=findFacingEntity(position,direction,roomInteractions);
   if(nearby?.entity.id!==activeNearbyEntityId){activeNearbyEntityId=nearby?.entity.id;interactionPrompt.hidden=!nearby;if(nearby){const action=nearby.entity.id===72?"take knife":nearby.entity.id===3998?"attack dummy":nearby.entity.id===ARENA_GONG.id?"ring gong":HOSTILE_IDS.has(nearby.entity.id)?`attack ${field(nearby.entity,"short_description","opponent")}`:"interact";interactionPrompt.textContent=`E · ${action}`;}}
   if(target?.entity.id===activeEntityId)return;
@@ -163,10 +186,13 @@ function updateInteractionPrompt(forward: THREE.Vector3) {
 }
 function startDummyCombat(){if(currentRoomId!==3982)return showInteraction("No target","The wooden practice dummy is not here.");combatTargetId=3998;combatClock=0;showInteraction("Combat started",`You attack the wooden dummy${inventory.has(72)?" with your knife":" with your bare hands"}. Type STOP to disengage.`);renderPlayerStatus();}
 function ringArenaGong(){if(currentRoomId!==4168)return showInteraction("No gong here","The Pendelhaven arena gong is not here.");arenaRound+=1;arenaOpponentId=arenaOpponent(arenaRound);const stats=hostileStats(arenaOpponentId)!;combatTargetHealth=stats.maxHealth;combatTargetId=undefined;combatClock=enemyCombatClock=0;buildRoom(undefined,true);showInteraction("The arena gong booms",`Smoke curls from the summoning circle. A ${stats.name} materializes with ${stats.maxHealth} health. Aim at it and press E, or type ATTACK ${stats.name.toUpperCase()}.`);renderPlayerStatus();}
-function startHostileCombat(id:number){const stats=hostileStats(id);if(currentRoomId!==4168||arenaOpponentId!==id||!stats)return showInteraction("No target","That opponent is not available here.");if(combatTargetHealth<=0)return showInteraction("Opponent defeated","Ring the gong to summon the next arena opponent.");combatTargetId=id;combatClock=enemyCombatClock=0;showInteraction("Arena combat started",`You engage the ${stats.name}${inventory.has(72)?" with your knife":" with your bare hands"}. It will fight back. Type STOP to disengage.`);renderPlayerStatus();}
+function startHostileCombat(id:number){const stats=hostileStats(id),present=roomInteractions.some(target=>target.id===id);if(!stats||!present||(currentRoomId===4168&&arenaOpponentId!==id)||isMobDefeated(`${currentRoomId}:${id}`))return showInteraction("No target","That opponent is not available here.");if(combatTargetId!==id)combatTargetHealth=stats.maxHealth;if(combatTargetHealth<=0)return showInteraction("Opponent defeated",currentRoomId===4168?"Ring the gong to summon the next arena opponent.":"This area is temporarily safe.");combatTargetId=id;combatClock=enemyCombatClock=0;showInteraction("Combat started",`You engage the ${stats.name} with ${equippedWeapon?`your ${EQUIPMENT[equippedWeapon].name}`:"your bare hands"}. It will fight back. Type STOP to disengage.`);renderPlayerStatus();}
 function stopCombat(){combatTargetId=undefined;combatClock=enemyCombatClock=0;showInteraction("Combat stopped","You stop attacking.");renderPlayerStatus();}
-function respawnPlayer(){playerHealth=100;combatTargetId=undefined;arenaOpponentId=undefined;combatTargetHealth=0;combatClock=enemyCombatClock=0;currentRoomId=4169;buildRoom();camera.position.set(4.5,1.7,4.5);yaw=-Math.PI*3/4;showInteraction("You awaken in Pendelhaven Hospice","Vivian and the healers restore you to full health. Your equipment remains with you.");renderPlayerStatus();}
-function advanceCombat(dt:number){if(combatTargetId===3998){combatClock+=dt;if(combatClock<.8)return;combatClock-=.8;const damage=practiceDamage(inventory.has(72));dummyHealth=Math.max(0,dummyHealth-damage);showInteraction("You strike the wooden dummy",`${inventory.has(72)?"Your knife bites into the practice wood":"Your blow thumps against the wood"} for ${damage} damage.\n\nDummy: ${dummyHealth}/30 HP`);if(dummyHealth===0){combatTargetId=undefined;interactionText.textContent+="\n\nThe battered dummy yields. Practice complete.";}renderPlayerStatus();return;}const stats=combatTargetId?hostileStats(combatTargetId):undefined;if(!stats)return;combatClock+=dt;enemyCombatClock+=dt;let message="";if(combatClock>=.8){combatClock-=.8;const damage=playerDamage(inventory.has(72));combatTargetHealth=Math.max(0,combatTargetHealth-damage);message=`You strike the ${stats.name} for ${damage} damage.`;if(combatTargetHealth===0){victories+=1;combatTargetId=undefined;if(activeHostileVisual)activeHostileVisual.rotation.z=Math.PI/2;message+=`\n\nThe ${stats.name} collapses. Arena victory ${victories}. Ring the gong for another opponent.`;showInteraction("Victory",message);renderPlayerStatus();return;}}if(enemyCombatClock>=stats.attackInterval){enemyCombatClock-=stats.attackInterval;playerHealth=Math.max(0,playerHealth-stats.damage);message+=`${message?"\n":""}The ${stats.name} hits you for ${stats.damage} damage.`;if(playerHealth===0){respawnPlayer();return;}}if(message)showInteraction(`Fighting ${stats.name}`,`${message}\n\nYou: ${playerHealth}/100 HP · ${stats.name}: ${combatTargetHealth}/${stats.maxHealth} HP`);renderPlayerStatus();}
+function respawnPlayer(){const stats=currentCharacterStats();playerHealth=stats.maxHealth;playerEndurance=stats.maxEndurance;combatTargetId=undefined;arenaOpponentId=undefined;combatTargetHealth=0;combatClock=enemyCombatClock=0;currentRoomId=4169;buildRoom();playerPosition.set(4.5,0,4.5);yaw=-Math.PI*3/4;showInteraction("You awaken in Pendelhaven Hospice","Vivian and the healers restore your health and endurance. Your experience and equipment remain with you.");renderPlayerStatus();}
+function flashPlayerDamage(){document.body.classList.remove("hurt");void document.body.offsetWidth;document.body.classList.add("hurt");setTimeout(()=>document.body.classList.remove("hurt"),260);}
+function completeHostileVictory(id:number,name:string){const reward=rewardForMob(id);combatTargetId=undefined;if(activeHostileVisual)activeHostileVisual.rotation.z=Math.PI/2;let rewardText="";if(reward){const result=gainExperience(progression,reward.experience);progression=result.progression;ownedEquipment.add(reward.loot);rewardText=`\n\n+${reward.experience} XP · found ${EQUIPMENT[reward.loot].name}. Type EQUIP ${EQUIPMENT[reward.loot].name.toUpperCase()}.`;if(result.levelsGained){const oldMax=currentCharacterStats().maxHealth;const newStats=characterStats(playerRace,playerClass,progression.level);playerHealth=Math.min(newStats.maxHealth,playerHealth+Math.max(12,newStats.maxHealth-oldMax));rewardText+=`\nLevel up! You are now level ${progression.level}.`;}}
+  if(currentRoomId===4168){victories+=1;rewardText+=`\nArena victory ${victories}. Ring the gong for another opponent.`;}else{defeatedMobs.set(`${currentRoomId}:${id}`,performance.now()+30000);rewardText+="\nThis creature will respawn in about 30 seconds.";}showInteraction("Victory",`The ${name} collapses.${rewardText}`);renderPlayerStatus();}
+function advanceCombat(dt:number){if(combatTargetId===3998){combatClock+=dt;if(combatClock<.8)return;combatClock-=.8;const damage=attackDamage(currentCharacterStats(),equippedWeapon?EQUIPMENT[equippedWeapon]:undefined);dummyHealth=Math.max(0,dummyHealth-damage);spawnCombatText(`-${damage}`,"#ffd66b",dummyVisual?.position??new THREE.Vector3());showInteraction("You strike the wooden dummy",`Your attack deals ${damage} damage.\n\nDummy: ${dummyHealth}/30 HP`);if(dummyHealth===0){combatTargetId=undefined;interactionText.textContent+="\n\nThe battered dummy yields. Practice complete.";}renderPlayerStatus();return;}const stats=combatTargetId?hostileStats(combatTargetId):undefined;if(!stats)return;const targetId=combatTargetId!;combatClock+=dt;enemyCombatClock+=dt;let message="";if(combatClock>=.8){combatClock-=.8;const damage=attackDamage(currentCharacterStats(),equippedWeapon?EQUIPMENT[equippedWeapon]:undefined);combatTargetHealth=Math.max(0,combatTargetHealth-damage);const targetPosition=roomInteractions.find(target=>target.id===targetId)?.position??new THREE.Vector3();spawnCombatText(`-${damage}`,"#ffd66b",targetPosition);message=`You strike the ${stats.name} for ${damage} damage.`;if(combatTargetHealth===0){completeHostileVictory(targetId,stats.name);return;}}if(enemyCombatClock>=stats.attackInterval){enemyCombatClock-=stats.attackInterval;const damage=receivedDamage(stats.damage,currentCharacterStats(),equippedArmor?EQUIPMENT[equippedArmor]:undefined);playerHealth=Math.max(0,playerHealth-damage);spawnCombatText(`-${damage}`,"#ff5b4d",playerPosition);flashPlayerDamage();message+=`${message?"\n":""}The ${stats.name} hits you for ${damage} damage.`;if(playerHealth===0){respawnPlayer();return;}}if(message)showInteraction(`Fighting ${stats.name}`,`${message}\n\nYou: ${playerHealth}/${currentCharacterStats().maxHealth} HP · ${stats.name}: ${combatTargetHealth}/${stats.maxHealth} HP`);renderPlayerStatus();}
 function runInitialRoomDiagnostics() {
   const paths=["/models/generated/training_room_3976.glb","/models/generated/old_man_3993.glb","/models/generated/old_parchment_3985.glb"];
   const checks=[
@@ -180,9 +206,9 @@ function runInitialRoomDiagnostics() {
 }
 
 function buildRoom(entryEdge?:Edge,preserveCamera=false) {
-  const previousPosition=camera.position.clone(),previousYaw=yaw,previousPitch=pitch;
-  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;dummyVisual=undefined;activeHostileVisual=undefined;
-  if(preserveCamera){camera.position.copy(previousPosition);yaw=previousYaw;pitch=previousPitch;}else{const arrivalDirection=entryEdge?edgesFrom(world,currentRoomId,true).find(edge=>edge.to_room===entryEdge.from_room)?.direction:undefined;const spawn=entryEdge?entrySpawnAfterTravel(entryEdge.direction,arrivalDirection):undefined;if(spawn){camera.position.set(spawn.x,1.7,spawn.z);yaw=spawn.yaw;pitch=0;}else{camera.position.set(0,1.7,0);yaw=0;pitch=0;}}
+  const previousPosition=playerPosition.clone(),previousYaw=yaw,previousPitch=pitch;
+  const generation = ++roomGeneration; chamber.clear(); exitTriggers.length = 0; roomInteractions.length=0;ambientMotions.length=0;characterMotions.length=0;floatingCombatTexts.length=0;dummyVisual=undefined;activeHostileVisual=undefined;
+  if(preserveCamera){playerPosition.copy(previousPosition);yaw=previousYaw;pitch=previousPitch;}else{const arrivalDirection=entryEdge?edgesFrom(world,currentRoomId,true).find(edge=>edge.to_room===entryEdge.from_room)?.direction:undefined;const spawn=entryEdge?entrySpawnAfterTravel(entryEdge.direction,arrivalDirection):undefined;if(spawn){playerPosition.set(spawn.x,0,spawn.z);yaw=spawn.yaw;pitch=0;}else{playerPosition.set(0,0,0);yaw=0;pitch=0;}}if(playerAvatar)playerAvatar.root.position.copy(playerPosition);
   if(currentRoomId!==3982&&currentRoomId!==4168){combatTargetId=undefined;combatClock=enemyCombatClock=0;}else if(currentRoomId===3982&&dummyHealth<=0)dummyHealth=30;
   const modeledRoom=trainingRouteModel(currentRoomId);
   if (modeledRoom) {
@@ -208,7 +234,7 @@ function buildRoom(entryEdge?:Edge,preserveCamera=false) {
     exitTriggers.push({edge,position:at});
   });
   const roomSpawn=world.spawns.find(s=>s.id===currentRoomId); let markerIndex=0;
-  for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e) marker(e,entry.entity_type,markerIndex++,generation,entry.count); }
+  for (const entry of roomSpawn?.entries??[]) { const list=entry.entity_type==="npc"?world.npcs:world.items; const e=list.find(x=>x.id===entry.entity_id); if(e&&!(entry.entity_type==="npc"&&HOSTILE_IDS.has(e.id)&&isMobDefeated(`${currentRoomId}:${e.id}`))) marker(e,entry.entity_type,markerIndex++,generation,entry.count); }
   if(currentRoomId===4168){const gongPosition=new THREE.Vector3(5.1,.7,-2.8);roomInteractions.push({id:ARENA_GONG.id,entity:ARENA_GONG,kind:"item",position:gongPosition,count:1,x:gongPosition.x,z:gongPosition.z});const gongLabel=sprite("INTERACT · arena gong");gongLabel.position.set(gongPosition.x,2.8,gongPosition.z);chamber.add(gongLabel);if(arenaOpponentId){const opponent=entity(arenaOpponentId);if(opponent)marker(opponent,"npc",markerIndex++,generation,1);}}
   if(modeledRoom)addRoomAnimation(modeledRoom.animation);
   interactionPanel.hidden=true; interactionPinned=false; activeEntityId=undefined; activeNearbyEntityId=undefined; interactionPrompt.hidden=true; renderUi(); renderTutorial(); renderPlayerStatus();
@@ -231,25 +257,29 @@ function issue(raw: string) {
   const action=gameplayCommand(c);
   if(action==="get-knife"){
     if(currentRoomId!==3980)return showInteraction("No knife here","You do not see a knife close enough to take.");
-    inventory.add(72);showInteraction("You take a knife",field(entity(72)!,"long_description","You take one of the knives."));renderPlayerStatus();return;
+    inventory.add(72);ownedEquipment.add("training-knife");equippedWeapon="training-knife";if(playerAvatar)setAvatarEquipment(playerAvatar,equippedWeapon);showInteraction("You equip a training knife",field(entity(72)!,"long_description","You take one of the knives."));renderPlayerStatus();return;
   }
   if(action==="attack-dummy")return startDummyCombat();
   if(action==="ring-gong")return ringArenaGong();
   if(action==="stop-combat")return stopCombat();
-  if(action==="inventory")return showInteraction("Inventory",inventory.has(72)?"knife":"You are carrying nothing.");
-  const targetName=attackTargetName(c);if(targetName&&arenaOpponentId&&matchesHostileName(arenaOpponentId,targetName))return startHostileCombat(arenaOpponentId);
+  if(action==="inventory")return showInteraction("Inventory",ownedEquipment.size?[...ownedEquipment].map(id=>`${EQUIPMENT[id].name}${id===equippedWeapon||id===equippedArmor?" [equipped]":""}`).join("\n"):"You are carrying nothing.");
+  if(c.startsWith("equip ")){const item=findEquipment(c.slice(6));if(!item||!ownedEquipment.has(item.id))return showInteraction("Cannot equip","You do not own that equipment.");if(item.slot==="weapon"){equippedWeapon=item.id;if(playerAvatar)setAvatarEquipment(playerAvatar,equippedWeapon);}else equippedArmor=item.id;showInteraction("Equipment changed",`You equip ${item.name}.`);renderPlayerStatus();return;}
+  if(c==="stats"||c==="score"){const stats=currentCharacterStats();return showInteraction(`${playerName} · level ${progression.level}`,`${playerRace} ${playerClass}\nHealth ${playerHealth}/${stats.maxHealth}\nEndurance ${Math.ceil(playerEndurance)}/${stats.maxEndurance}\nDamage ${attackDamage(stats,equippedWeapon?EQUIPMENT[equippedWeapon]:undefined)}\nArmor ${stats.armor+(equippedArmor?EQUIPMENT[equippedArmor].armor??0:0)}\nExperience ${progression.experience}/${progression.nextLevelExperience}`);}
+  const targetName=attackTargetName(c);if(targetName){const hostile=roomInteractions.find(target=>HOSTILE_IDS.has(target.id)&&matchesHostileName(target.id,targetName));if(hostile)return startHostileCombat(hostile.id);}
   if(c==="look"||c==="l")return renderUi("You look around.");
   const edge=travel(world,currentRoomId,c,showHidden); if(edge)return go(edge);
   renderUi(commandDirection(c)?"No such visible exit.":`Unknown command: ${raw}`);
 }
 
 document.querySelector<HTMLFormElement>("#command-form")!.addEventListener("submit",event=>{event.preventDefault();const input=document.querySelector<HTMLInputElement>("#command")!;issue(input.value);input.value="";});
-canvas.addEventListener("click",()=>canvas.requestPointerLock()); document.addEventListener("mousemove",e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.002;pitch=Math.max(-1.35,Math.min(1.35,pitch-e.movementY*.002));});
-addEventListener("keydown",e=>{if((e.target as HTMLElement).tagName==="INPUT")return;keys.add(e.code);if(e.code==="KeyE"&&!e.repeat)interactNearby();if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom(undefined,true);}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
-addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+canvas.addEventListener("click",()=>{if(characterCreated)void canvas.requestPointerLock();}); document.addEventListener("mousemove",e=>{if(document.pointerLockElement!==canvas)return;yaw-=e.movementX*.002;pitch=Math.max(-.8,Math.min(.8,pitch-e.movementY*.002));});
+addEventListener("keydown",e=>{if(["INPUT","SELECT","BUTTON"].includes((e.target as HTMLElement).tagName))return;keys.add(e.code);if(e.code==="KeyE"&&!e.repeat)interactNearby();if(e.code==="KeyV"&&!e.repeat){thirdPerson=!thirdPerson;if(playerAvatar)playerAvatar.root.visible=thirdPerson;}if(e.key.toLowerCase()==="h"){showHidden=!showHidden;buildRoom(undefined,true);}if(e.key==="`"){developerVisible=!developerVisible;renderUi();}});addEventListener("keyup",e=>keys.delete(e.code));
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);});
+characterRaceSelect.addEventListener("change",updateCharacterPreview);characterClassSelect.addEventListener("change",updateCharacterPreview);updateCharacterPreview();
+characterForm.addEventListener("submit",event=>{event.preventDefault();playerName=characterNameInput.value.trim()||"Adventurer";playerRace=(RACES.includes(characterRaceSelect.value as PlayerRace)?characterRaceSelect.value:"Human") as PlayerRace;playerClass=(CLASSES.includes(characterClassSelect.value as PlayerClass)?characterClassSelect.value:"Warrior") as PlayerClass;const stats=currentCharacterStats();playerHealth=stats.maxHealth;playerEndurance=stats.maxEndurance;characterCreated=true;characterCreation.hidden=true;rebuildPlayerAvatar();renderPlayerStatus();});
 
-let last=performance.now(), transitionCooldown=0;
-function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;camera.rotation.set(pitch,yaw,0);const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0));const right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0));const proposed=camera.position.clone();if(keys.has("KeyW"))proposed.addScaledVector(forward,dt*4);if(keys.has("KeyS"))proposed.addScaledVector(forward,-dt*4);if(keys.has("KeyA"))proposed.addScaledVector(right,-dt*4);if(keys.has("KeyD"))proposed.addScaledVector(right,dt*4);if(currentRoomId===INITIAL_ROOM_ID){const constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7,constrained.z);}else{const constrained=constrainModeledMovement(currentRoomId,{x:camera.position.x,z:camera.position.z},{x:proposed.x,z:proposed.z});camera.position.set(constrained.x,1.7+modeledFloorHeight(currentRoomId,constrained),constrained.z);}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);animateCentralMotions(now);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>horizontalTriggerReached(camera.position,x.position));if(hit){transitionCooldown=1;go(hit.edge);}}renderer.render(scene,camera);}
+let last=performance.now(), transitionCooldown=0,hudClock=0;
+function frame(now:number){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;const forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(0,yaw,0)),right=new THREE.Vector3(1,0,0).applyEuler(new THREE.Euler(0,yaw,0)),move=new THREE.Vector3();if(characterCreated){if(keys.has("KeyW"))move.add(forward);if(keys.has("KeyS"))move.sub(forward);if(keys.has("KeyA"))move.sub(right);if(keys.has("KeyD"))move.add(right);}const moving=move.lengthSq()>.001;if(moving)move.normalize();const wantsRun=moving&&(keys.has("ShiftLeft")||keys.has("ShiftRight"))&&playerEndurance>0,isRunning=wantsRun&&playerEndurance>.1,stats=currentCharacterStats();playerEndurance=updateEndurance(playerEndurance,stats.maxEndurance,dt,isRunning,moving);const proposed=playerPosition.clone().addScaledVector(move,dt*(isRunning?7.2:4));let constrained:{x:number;z:number};if(currentRoomId===INITIAL_ROOM_ID)constrained=constrainInitialRoomMovement({x:proposed.x,z:proposed.z});else constrained=constrainModeledMovement(currentRoomId,{x:playerPosition.x,z:playerPosition.z},{x:proposed.x,z:proposed.z});playerPosition.set(constrained.x,modeledFloorHeight(currentRoomId,constrained),constrained.z);if(playerAvatar){playerAvatar.root.position.copy(playerPosition);playerAvatar.root.visible=thirdPerson;if(moving)playerAvatar.root.rotation.y=Math.atan2(-move.x,-move.z);animatePlayerAvatar(playerAvatar,now/1000,moving,isRunning,combatTargetId!==undefined);playerAvatar.root.position.y+=playerPosition.y;}if(thirdPerson){const focus=playerPosition.clone().add(new THREE.Vector3(0,1.45,0)),desired=focus.clone().addScaledVector(forward,-5.8).add(new THREE.Vector3(0,2.25+pitch*2.2,0));camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(focus);}else{camera.position.set(playerPosition.x,playerPosition.y+1.7,playerPosition.z);camera.rotation.set(pitch,yaw,0);}updateInteractionPrompt(forward);advanceCombat(dt);animateRoom(now);animateCentralMotions(now);animateCombatText(dt);transitionCooldown-=dt;if(transitionCooldown<=0){const hit=exitTriggers.find(x=>horizontalTriggerReached(playerPosition,x.position));if(hit){transitionCooldown=1;go(hit.edge);}}hudClock-=dt;if(hudClock<=0){hudClock=.1;renderPlayerStatus();}composer.render();}
 
-async function boot(){try{const response=await fetch("/private/pendelhaven-v1.json",{cache:"no-store"});if(!response.ok)throw new Error(`fixture request failed (${response.status}). Run npm run prepare:fixture or the documented PowerShell command.`);world=validateWorld(await response.json());currentRoomId=world.fixture.primary_room_ids[0];renderer.setSize(innerWidth,innerHeight);buildRoom();requestAnimationFrame(frame);}catch(error){const box=document.querySelector<HTMLElement>("#error")!;box.hidden=false;box.textContent=`Unable to start\n\n${error instanceof Error?error.message:String(error)}`;}}
+async function boot(){try{const response=await fetch("/private/pendelhaven-v1.json",{cache:"no-store"});if(!response.ok)throw new Error(`fixture request failed (${response.status}). Run npm run prepare:fixture or the documented PowerShell command.`);world=validateWorld(await response.json());currentRoomId=world.fixture.primary_room_ids[0];renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);buildRoom();requestAnimationFrame(frame);}catch(error){const box=document.querySelector<HTMLElement>("#error")!;box.hidden=false;box.textContent=`Unable to start\n\n${error instanceof Error?error.message:String(error)}`;}}
 void boot();

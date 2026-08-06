@@ -89,8 +89,9 @@ def room_4170():
 def room_4171():
     clear();floor,wall,trim=shell(4171,{"N","E"},((.16,.15,.13,1),(.27,.26,.23,1),(.58,.48,.27,1)))
     wood=material("Bank dark oak",(.18,.075,.025,1),roughness=.76);brass=material("Bank brass",(.67,.44,.11,1),metallic=.72,roughness=.28);iron=material("Teller bars",(.2,.22,.22,1),metallic=.7,roughness=.38);cloth=material("Coin bags",(.31,.19,.09,1),roughness=.95)
-    cube("Teller partition",(0,1.35,-4.75),(12,2.7,1.2),wood,.1);cube("Teller counter",(0,1.45,-3.95),(12,.25,1.2),wood,.06)
-    for x in (-4.5,-2.25,0,2.25,4.5):
+    for x in (-3.65,3.65):cube("Teller partition",(x,1.35,-4.75),(4.7,2.7,1.2),wood,.1);cube("Teller counter",(x,1.45,-3.95),(4.7,.25,1.2),wood,.06)
+    cube("Public counter gate",(0,.18,-4.15),(2.5,.36,1.25),brass,.06)
+    for x in (-4.5,-2.25,2.25,4.5):
         for dx in (-.55,0,.55):cube("Teller bar",(x+dx,2.75,-4.05),(.07,2.5,.08),iron,.02)
         cylinder("Coin stack",(x,1.72,-3.8),.22,.16,brass,20)
     for x,z in ((-5,1.5),(-3,3.2),(3,2),(5,4)):
