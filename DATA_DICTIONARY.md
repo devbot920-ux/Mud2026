@@ -25,6 +25,12 @@ Detailed rules appear in `docs/CONVENTIONS.md`.
 | RCI_RAND | 17 | Random definitions/tables | Tentative |
 | RCI_CLAN, RCI_INS2, RCI_MOD2, RCI_PLAY, RCI_UNIV | 0 | Empty snapshot/template databases | Strong for row count; semantics unknown |
 
+## HEL1 gameplay/help evidence
+
+Read-only inspection of converted `RCI_HEL1.db` confirms 189 keyed help records. `keys_t` identifies a two-byte numeric topic key at offset 0 and five 30-byte text-key segments at offsets 2, 32, 62, 92, and 122. The converted `data_t.key_1` through `key_5` values expose command aliases including `inventory`/`inv`/`I`, `equip`/`arm`, `stats`/`attributes`, and `skills`/`showprofs` (Strong for keys and aliases).
+
+CP437/NUL-segment reading of the longer record bodies is still provisional, but consistently documents six races, six starting walks of life, eight attributes, prime-requisite proficiency adjustment, mana, health, attack/action delays, armor class versus absorption, equipped slots, and encumbrance measured in troys (Tentative text decoding; Strong semantic corroboration where matching DLL consumers exist). A concise implementation/evidence ledger is tracked in `docs/GAMEPLAY_RULES.md`.
+
 ## Currently interpreted MOD1 tags
 
 These meanings come from the existing research scripts and must be revalidated during Phase 1/3.

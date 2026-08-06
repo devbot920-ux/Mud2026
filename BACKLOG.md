@@ -59,11 +59,14 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 ## Phase 6 — First sustained playable client
 
 - [ ] Run the documented hands-on comparison route in all three prototypes
-- [ ] Confirm the primary engine and archive the other clients as reference implementations
+- [x] Confirm Three.js as the primary playable client and retain the other clients as reference implementations
 - [ ] Install matching export templates/modules for the selected deployment targets
 - [ ] Add stateful doors and room interaction without changing canonical topology
-- [ ] Add inventory and equipment from evidence-backed item fields
-- [ ] Add NPC interaction and spawning from evidence-backed fixture fields
+- [x] Add a functional weighted inventory/equipment slice with explicit prototype-only item values
+- [x] Add NPC interaction and spawning from evidence-backed fixture fields
+- [x] Add graphical character, proficiency, inventory, and control-mode menus
+- [ ] Decode item weight, equipment-location, proficiency requirement, and restriction fields to replace prototype values
+- [ ] Add shops, currency, buying/selling, and source-backed encumbrance penalties
 - [ ] Add private save-state persistence separate from canonical source data
 
 ## Research queue

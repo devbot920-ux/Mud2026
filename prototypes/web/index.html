@@ -16,14 +16,23 @@
     </section>
     <aside id="developer"></aside>
     <aside id="player-status"></aside>
+    <nav id="game-menu" aria-label="Game menus">
+      <button type="button" data-open-panel="inventory">Pack <kbd>I</kbd></button>
+      <button type="button" data-open-panel="character">Character <kbd>C</kbd></button>
+      <button type="button" id="control-mode">Commands <kbd>Enter</kbd></button>
+    </nav>
+    <section id="game-panel" hidden aria-modal="true" role="dialog">
+      <header><div><div class="eyebrow">ADVENTURER</div><h2 id="game-panel-title">Inventory</h2></div><button type="button" id="game-panel-close" aria-label="Close menu">×</button></header>
+      <div id="game-panel-content"></div>
+    </section>
     <section id="character-creation">
       <form id="character-form">
         <div class="eyebrow">CREATE YOUR ADVENTURER</div>
         <h2>Enter Pendelhaven</h2>
         <label>Name <input id="character-name" maxlength="20" value="Adventurer" /></label>
         <div class="creation-grid">
-          <label>Race <select id="character-race"><option>Human</option><option>Elf</option><option>Dwarf</option><option>Kobold</option></select></label>
-          <label>Class <select id="character-class"><option>Warrior</option><option>Rogue</option><option>Mage</option><option>Cleric</option></select></label>
+          <label>Race <select id="character-race"><option>Human</option><option>Elf</option><option>Dwarf</option><option>Gnome</option><option>Giant</option><option>Fairfolk</option></select></label>
+          <label>Walk of life <select id="character-class"><option>Warrior</option><option>Scholar</option><option>Gypsy</option><option>Priest</option><option>Mage</option><option>Archtypical</option></select></label>
         </div>
         <p id="character-preview"></p>
         <button type="submit">Begin adventure</button>
@@ -33,7 +42,7 @@
     <section id="interaction-panel" hidden><h2 id="interaction-title"></h2><div id="interaction-text"></div></section>
     <aside id="tutorial" hidden></aside>
     <div id="interaction-prompt" hidden></div>
-    <div id="help">Click + mouse look · WASD move · hold Shift to run · E interact/attack · tap V camera · hold V + wheel zoom · RING GONG · EQUIP item · H hidden exits</div>
+    <div id="help">Mouse look · WASD · Shift run · E interact · I pack · C character · Enter commands · tap V camera · hold V + wheel zoom</div>
     <form id="command-form">
       <span>&gt;</span><input id="command" autocomplete="off" spellcheck="false" placeholder="look, examine old man, read parchment, west, diagnose…" /><button type="submit">Go</button>
     </form>

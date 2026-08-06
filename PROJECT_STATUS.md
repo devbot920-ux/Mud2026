@@ -1,8 +1,8 @@
 # Project Status
 
-Updated: 2026-08-03
+Updated: 2026-08-06
 Branch: `dev`
-Milestone: Phase 5 — three corrected Pendelhaven engine prototypes complete
+Milestone: Phase 6 — Three.js sustained playable client underway
 
 ## Current state
 
@@ -10,7 +10,9 @@ The repository foundation and provenance policy are established. The game engine
 
 Phase 1 imports every row and value from all 13 source databases into a reproducible raw-provenance SQLite baseline. Phase 2 audits all 7,097 source-decoded edges. Phase 3 catalogs all 118 MOD1 tags. Phase 4 defines an engine-neutral versioned JSON contract and closes the 60-room Pendelhaven fixture over topology, spawns, referenced entities, and modifiers. A 2026-08-03 correction promoted the MOD1 tag from one byte to little-endian `u16`, separating several previously collapsed high tags before Phase 5 client work.
 
-Phase 5 now has comparable Godot 4.7.1, Unity 6000.5.6f1, and Three.js clients loading the same corrected fixture. Godot remains the technical recommendation, but final selection awaits the owner's hands-on comparison.
+Phase 5 produced comparable Godot 4.7.1, Unity 6000.5.6f1, and Three.js clients loading the same corrected fixture. Hands-on feedback selected Three.js for the sustained playable client; Godot and Unity remain reference implementations.
+
+The web client now has a source-aligned character/inventory slice. Character creation offers all six HEL1 races and starting walks of life. It models all eight recovered attributes, six foundational proficiencies with prime-attribute adjustment, health, movement, mana, attack delay, encumbrance, weighted inventory, and one weapon/one armor slot. Graphical Pack and Character menus coexist with command equivalents, and an explicit Commands/Mouse control switches cleanly between pointer-look and text entry. Exact numeric formulas and item values remain labeled prototype balancing pending deeper decoding.
 
 Known source evidence:
 
@@ -160,6 +162,14 @@ Phase 5 verification completed on 2026-08-03:
 - All three clients consumed the unchanged corrected fixture; generated builds and private source content remain ignored
 - `git diff --check` — passed
 
+Phase 6 RPG-interface verification completed on 2026-08-06:
+
+- Read-only HEL1 inspection recovered race, walk-of-life, attribute, proficiency, equipment, delay, mana, health, armor, and encumbrance help concepts
+- Decompiled DLL consumers corroborate inventory lists, equipped slots, wear checks, and current/maximum encumbrance
+- Three.js Vitest suite — 73/73 tests passed across 9 files
+- TypeScript check and Vite production build — passed
+- Automated localhost browser control was blocked by browser URL policy; no bypass was attempted
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
@@ -171,4 +181,4 @@ Phase 5 verification completed on 2026-08-03:
 
 ## Exact next task
 
-Run the Phase 5 hands-on comparison route in all three clients, select the sustained Phase 6 engine, and install its matching export support. Continue decoding only the fixture fields needed by the next playable interaction slice.
+Hands-on check the new Pack, Character, and command/mouse controls in the running Three.js client. Next, decode the item weight/equipment requirement fields and implement Pendelhaven shop/currency interactions plus private save-state persistence.

@@ -104,3 +104,17 @@ The fixture includes all 60 rooms assigned to derived region `R02` and every can
 - Status: Accepted
 
 The first contract is `mud2026.engine-neutral-world` version `1.0.0`, described by a tracked JSON Schema. Generated exports remain under ignored `var/exports/` pending an explicit licensing/content decision. Complete raw bytes are retained only for associated non-base modifiers so unresolved records survive the handoff; tracked files contain tools, schema, tests, and aggregate findings only.
+
+## D-015 — Continue the sustained playable client in Three.js
+
+- Date: 2026-08-06
+- Status: Accepted
+
+Hands-on feedback selected the web prototype as the most usable of the three engine spikes. Three.js is the active playable client. Godot and Unity remain reference implementations and fixture-validation examples; new gameplay/UI work targets `prototypes/web` unless this decision is revisited.
+
+## D-016 — Separate recovered Rose concepts from prototype balancing
+
+- Date: 2026-08-06
+- Status: Accepted
+
+Character creation and UI terminology will follow recovered HEL1 evidence: six races, six starting walks of life, eight attributes, and prime-requisite proficiencies. Until original formulas and exact record fields are decoded, numerical race/walk modifiers, derived-stat formulas, starter skills, loot weights, and bonuses remain deterministic prototype rules. They must be tested and labeled as such rather than presented as recovered facts.
