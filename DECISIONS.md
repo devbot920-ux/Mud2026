@@ -125,3 +125,10 @@ Character creation and UI terminology will follow recovered HEL1 evidence: six r
 - Status: Accepted
 
 Spell records are exported from `RCI_SPEL.db` through a tracked immutable/read-only decoder into ignored private JSON. Exact recovered mana, success-threshold, effect-handler, damage-dice, healing-dice, and base-delay fields drive gameplay. Incomplete delay helpers, walk-number mapping, starter spell ownership, starting sphere proficiency, and undecoded item damage values remain small isolated prototype rules with tests and visible UI disclosure.
+
+## D-018 — Require explicit promotion and trainer-bound point spending
+
+- Date: 2026-08-07
+- Status: Accepted
+
+Experience is banked until the player issues `PROMOTE` in a source-marked promotion room. Promotion follows recovered point grants: `50 + current-level d10 rolls` development points and 2 attribute points, capped at 10 unspent attribute points. The Pendlehaven fixture has a promotion-capable guild and a guild trainer but no separately decoded attribute-training room, so Oscar provisionally provides both proficiency and attribute training. Training proximity is required. Silver costs, exact per-walk cost tables, and full promotion HP/mana/race branches remain deferred and explicitly labeled.

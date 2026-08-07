@@ -68,8 +68,13 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Decode the initial SPEL record layout and integrate source-backed casting success, mana, damage, healing, and delays
 - [x] Add proximity actions, in-room hostile pursuit, melee range, exit blocking, and eligible room-to-room pursuit
 - [x] Integrate the recovered melee d100/proficiency/encumbrance structure with clearly provisional weapon-record values
+- [x] Replace automatic leveling with explicit source-aligned promotion and promotion-room limits
+- [x] Grant development/attribute points on promotion and require proximity to Oscar to spend them
+- [x] Map all 12 source wearable-location codes, render every slot, and add the fixture's animal-hide boots
+- [x] Add interruptible out-of-combat REST recovery
 - [ ] Decode item weight, equipment-location, proficiency requirement, and restriction fields to replace prototype values
 - [ ] Add shops, currency, buying/selling, and source-backed encumbrance penalties
+- [ ] Decode exact walk/proficiency training tables and add the recovered silver cost after currency exists
 - [ ] Add private save-state persistence separate from canonical source data
 
 ## Research queue

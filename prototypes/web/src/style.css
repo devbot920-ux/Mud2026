@@ -70,6 +70,15 @@ body.hurt::after { content:""; position:fixed; inset:0; pointer-events:none; box
 .spell-card p { min-height:42px; color:#bdb6a5; }
 .spell-meta { margin:8px 0; color:#8fb4c4; font:12px ui-monospace,monospace; }
 .spell-card button:disabled { opacity:.4; cursor:not-allowed; }
+.equipment-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:7px; margin:14px 0 20px; }
+.equipment-slot { display:flex; flex-direction:column; min-height:48px; padding:9px 10px; background:#080b0eaa; border:1px solid #ffffff18; }
+.equipment-slot span { color:#8e9ca2; text-transform:uppercase; font:10px ui-monospace,monospace; }
+.equipment-slot strong { margin-top:5px; color:#e6d6aa; font-size:13px; }
+.training-section { margin:18px 0; }
+.training-section h3 { color:#ead294; }
+.training-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; }
+.training-grid button { padding:10px; color:#e8ddb8; text-align:left; background:#182228; border:1px solid #71613f; cursor:pointer; }
+.training-grid button:disabled { opacity:.4; cursor:not-allowed; }
 #interaction-panel { position: fixed; right: 20px; bottom: 96px; width: min(440px, calc(100vw - 40px)); max-height: 42vh; overflow: auto; padding: 16px 18px; color: #ddd5bf; background: #11100eeb; border: 1px solid #997b43; box-shadow: 0 12px 35px #000b; white-space: pre-line; }
 #interaction-panel h2 { margin: 0 0 8px; color: #f1d99a; font-size: 18px; }
 #interaction-text { line-height: 1.55; }

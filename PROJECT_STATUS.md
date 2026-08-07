@@ -181,6 +181,16 @@ Phase 6 combat/casting verification completed on 2026-08-06:
 - TypeScript check and Vite production build — passed
 - Automated localhost browser control remained blocked by browser URL policy; no bypass was attempted
 
+Phase 6 character-progression verification completed on 2026-08-07:
+
+- HEL1 and DLL traces recovered explicit promotion, `50 + current-level d10` development-point grants, 2 attribute points, trainer-bound spending, the Warrior/Melee 3-point example, and resting state transitions
+- All 175 decoded armor records correlate wearable-location byte 73 to 12 locations; the client renders all 12 plus the separate weapon slot
+- Experience is banked until `PROMOTE` in Pendlehaven Guild, whose fixture modifier caps promotion at level 5
+- Oscar provides proximity-gated proficiency and attribute spending; exact silver and specialized-trainer rules remain pending the economy
+- Strength and trained attributes now feed physical damage and adjusted proficiency; REST restores resources until interrupted
+- Three.js Vitest suite — 87/87 tests passed across 11 files
+- TypeScript check — passed
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
@@ -192,4 +202,4 @@ Phase 6 combat/casting verification completed on 2026-08-06:
 
 ## Exact next task
 
-Hands-on check the spellbook, proximity buttons, hostile chase, exit blocking, sprint/flee escape, room-to-room pursuit, hit/miss feedback, healing, and spell damage. Next decode item damage/requirement fields and additional spell target flags/handlers, then implement Pendelhaven shops/currency and private save-state persistence.
+Hands-on earn at least 100 XP, visit room 4170, PROMOTE, approach Oscar, spend both point types, equip the wardroom boots, inspect all equipment slots, and verify REST interruption. Next decode item damage/requirement fields, exact training tables, and additional spell handlers, then implement shops/currency and private save-state persistence.

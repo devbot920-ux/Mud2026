@@ -185,3 +185,28 @@ Handler 0 (`_CAUSE_DAMAGE`) rolls the first triplet as `dice_count` independent 
 ## Combat formula evidence
 
 `_GET_TOHIT` confirms a d100-shaped check involving adjusted weapon proficiency, weapon proficiency requirement, target armor class, attack bonuses, and a one-third over-encumbrance penalty. `_ATTACK_PVNPC` derives damage dice from opposing offense and defense pools, then calls the same inclusive `_ROLLDICE` helper with weapon-record bounds. Exact item damage-bound and requirement fields are not yet decoded, so the web client implements this confirmed structure with explicitly prototype-only equipment ranges and requirements.
+
+## Promotion, training, rest, and equipment locations
+
+`RCI_HEL1.db` topics 38, 77, and 95 establish that experience is accumulated and traded for explicit promotion, promotion grants attribute-improvement points, and proficiency training consumes development points plus silver at specialized trainers. The help gives one exact cost example: a Warrior spends 3 development points to raise Melee Weaponry by one point. `_PROMOTE` corroborates explicit promotion and grants `50 + ROLLDICE(current_level, 1, 10)` development points plus 2 attribute points, with the observed attribute-point field capped at 10. Promotion also changes health, mana, and race-dependent values, but those branches are not fully mapped. The Pendlehaven Guild's `0x0075` modifier exposes a confirmed fixture promotion maximum of level 5.
+
+`_RESTME` and `_BREAK_REST` confirm a resting state that cannot begin while the relevant combat/action state is active. Exact healing ticks are not isolated, so the client rest-recovery rate remains prototype-defined.
+
+Armor modifier `0x0034` stores its wearable-location byte at raw record offset 73 (modifier-body offset 3). Correlation across 175 armor records gives the following strong mapping:
+
+| Code | Client slot | Records | Representative source item |
+|---:|---|---:|---|
+| 1 | Torso | 48 | animal hide vest |
+| 2 | Arms | 13 | animal hide sleeves |
+| 3 | Legs | 14 | animal hide leggings |
+| 4 | Feet | 17 | animal hide boots |
+| 5 | Head | 15 | leather cap |
+| 6 | Shield | 13 | leather buckler |
+| 7 | Cloak / outer garment | 27 | cloak |
+| 8 | Left ring | 2 | shadowring |
+| 9 | Right ring | 6 | ring of the elders |
+| 10 | Necklace | 6 | shadow necklace |
+| 11 | Bracers / magical shield | 5 | lesser magishield |
+| 12 | Amulet | 9 | amulet of the elders |
+
+The left/right ring labels are a client presentation choice; the source confirms two distinct ring locations but not handedness in the inspected text. Weapon arming remains separate from the 12 wearable locations.

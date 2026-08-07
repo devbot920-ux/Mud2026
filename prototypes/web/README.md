@@ -19,6 +19,7 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 
 - Create one of the six source-documented races (Human, Elf, Dwarf, Gnome, Giant, or Fairfolk) and choose one of the six starting walks of life (Warrior, Scholar, Gypsy, Priest, Mage, or Archtypical).
 - Press `I` for the graphical pack/equipment menu and `C` for the character sheet. The sheet shows all eight Rose attributes, derived combat/resources, encumbrance, and six core proficiencies with their prime-attribute adjustment.
+- The Pack shows the separately armed weapon and all 12 decoded wearable locations. Room 3980 contains source item 5, animal-hide boots, in addition to its knives.
 - Press `K` for the spellbook. Mana costs, d100 casting thresholds, damage/healing dice, and base recovery delays use decoded Rose spell records; `CAST <spell name or abbreviation>` is the command equivalent.
 - Press `Enter` to leave mouse-look and focus the MUD command line. Use the visible **Commands** / **Return to mouse** button to switch modes, or click the 3D world to resume mouse-look.
 - Third-person is the default. Click the chamber to capture the mouse, use mouse look and WASD movement, tap `V` to toggle first-person, or hold `V` and use the mouse wheel to adjust third-person distance.
@@ -42,6 +43,8 @@ Open `http://127.0.0.1:4173`. The prepare step verifies SHA-256 `146D19341A7172E
 - In Pendelhaven Arena (4168), press `E` at the gong or type `RING GONG` to summon one of four extracted opponents. Aim and press `E`, or type `ATTACK SLUG`, `ATTACK KOBOLD`, `ATTACK KOBOLD THUG`, or `ATTACK KOBOLD GUARD`.
 - Arena opponents fight back. Maximum health depends on race, class, and level; defeat respawns the player at full health in Pendelhaven Hospice while preserving progression and equipment. The arena cycles through giant slug, kobold, kobold thug, and hammer-bearing kobold guard models.
 - Canonical hostile spawns in the cellar and excavated tunnels also fight back. Victories award experience and deterministic equipment drops; defeated world mobs return after roughly 30 seconds.
+- Experience is banked rather than leveling automatically. When the XP meter is full, visit Pendlehaven Guild and type `PROMOTE`. Promotion grants development and attribute points; approach Oscar and press `E`, type `INQUIRE`, `TRAIN <skill>`, or `ENHANCE <attribute>` to spend them.
+- Type `REST` or `SLEEP` while out of combat to recover health, movement, and mana. Moving, fighting, casting, traveling, `WAKE`, or `STAND` interrupts rest.
 - Engaged hostiles chase to melee range, can block a nearby exit, and follow through eligible visible fixture exits. Hold `Shift` while crossing or use `FLEE <direction>` to spend movement and break through.
 - Use `INVENTORY`, `STATS`, `SKILLS`, `ARM <item name>`, `EQUIP <item name>`, `DISARM`, and `UNEQUIP [weapon|armor]` as command-mode equivalents. Weapons increase damage, armor reduces incoming damage, and equipped weapons appear on the third-person avatar.
 - Rendering uses ACES tone mapping, soft 2048px shadows, bloom, higher-detail lighting, damage flashes/numbers, and original generated stone and oak textures.
@@ -70,4 +73,4 @@ Room 3976 is a functional tutorial-room vertical slice with collision boundaries
 & 'C:\Program Files\nodejs\npm.cmd' run build
 ```
 
-Tests use only synthetic/public rule inputs. They cover contract/reference checks, navigation, targeting, commands, combat, recovered spell formulas, pursuit and exit blocking, all eight attributes, source-aligned race/walk differences, derived resources, proficiencies, progression, inventory weight, equipment-slot replacement, and camera controls.
+Tests use only synthetic/public rule inputs. They cover contract/reference checks, navigation, targeting, commands, combat, recovered spell formulas, pursuit and exit blocking, all eight attributes, source-aligned race/walk differences, explicit promotion and point grants, trainer costs, rest recovery, all equipment locations, progression, inventory weight, equipment-slot replacement, and camera controls.

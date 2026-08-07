@@ -1,7 +1,7 @@
 export type PlayerRace="Human"|"Elf"|"Dwarf"|"Gnome"|"Giant"|"Fairfolk";
 export type PlayerClass="Warrior"|"Scholar"|"Gypsy"|"Priest"|"Mage"|"Archtypical";
-export type EquipmentSlot="weapon"|"armor";
-export type EquipmentId="training-knife"|"kobold-dagger"|"thug-jerkin"|"guard-hammer"|"slug-hide";
+export type EquipmentSlot="weapon"|"torso"|"arms"|"legs"|"feet"|"head"|"shield"|"cloak"|"left-ring"|"right-ring"|"necklace"|"bracers"|"amulet";
+export type EquipmentId="training-knife"|"animal-hide-boots"|"kobold-dagger"|"thug-jerkin"|"guard-hammer"|"slug-hide";
 export type AttributeName="strength"|"wisdom"|"dexterity"|"constitution"|"intelligence"|"charisma"|"comeliness"|"perception";
 
 export interface Equipment {id:EquipmentId;name:string;description:string;slot:EquipmentSlot;weight:number;damage?:number;damageMin?:number;requirement?:number;armor?:number}
@@ -9,17 +9,19 @@ export type CharacterAttributes=Record<AttributeName,number>;
 export interface CharacterStats {maxHealth:number;maxEndurance:number;maxMana:number;baseDamage:number;armor:number;carryCapacity:number;attackInterval:number}
 export interface CharacterSkill {name:string;raw:number;adjusted:number;prime:AttributeName}
 export interface Progression {level:number;experience:number;nextLevelExperience:number}
-export interface Loadout {weapon?:EquipmentId;armor?:EquipmentId}
+export type Loadout=Partial<Record<EquipmentSlot,EquipmentId>>;
 
 export const ATTRIBUTE_NAMES:readonly AttributeName[]=["strength","dexterity","constitution","wisdom","intelligence","perception","charisma","comeliness"];
 export const RACES:readonly PlayerRace[]=["Human","Elf","Dwarf","Gnome","Giant","Fairfolk"];
 export const CLASSES:readonly PlayerClass[]=["Warrior","Scholar","Gypsy","Priest","Mage","Archtypical"];
+export const EQUIPMENT_SLOTS:readonly EquipmentSlot[]=["weapon","torso","arms","legs","feet","head","shield","cloak","left-ring","right-ring","necklace","bracers","amulet"];
 export const EQUIPMENT:Readonly<Record<EquipmentId,Equipment>>={
   "training-knife":{id:"training-knife",name:"training knife",description:"A balanced practice blade taken from the Pendelhaven training route.",slot:"weapon",weight:3,damageMin:3,damage:7,requirement:8},
+  "animal-hide-boots":{id:"animal-hide-boots",name:"animal hide boots",description:"Source item 5: treated hide protection worn over the feet and calves.",slot:"feet",weight:4,armor:1},
   "kobold-dagger":{id:"kobold-dagger",name:"kobold dagger",description:"A chipped but quick dagger recovered from a kobold.",slot:"weapon",weight:4,damageMin:5,damage:11,requirement:12},
-  "thug-jerkin":{id:"thug-jerkin",name:"kobold leather jerkin",description:"Layered leather that absorbs a modest amount of punishment.",slot:"armor",weight:12,armor:3},
+  "thug-jerkin":{id:"thug-jerkin",name:"kobold leather jerkin",description:"Layered leather that absorbs a modest amount of punishment.",slot:"torso",weight:12,armor:3},
   "guard-hammer":{id:"guard-hammer",name:"kobold guard hammer",description:"A heavy guard hammer with a punishing iron head.",slot:"weapon",weight:9,damageMin:8,damage:12,requirement:18},
-  "slug-hide":{id:"slug-hide",name:"hardened slug hide",description:"Cured hide from a giant slug, fashioned into flexible protection.",slot:"armor",weight:7,armor:2},
+  "slug-hide":{id:"slug-hide",name:"hardened slug-hide cloak",description:"Cured hide from a giant slug, fashioned into flexible outer protection.",slot:"cloak",weight:7,armor:2},
 };
 
 export const MOB_REWARDS:Readonly<Record<number,{experience:number;loot:EquipmentId}>>={
@@ -36,19 +38,20 @@ const CLASS_MODIFIERS:Record<PlayerClass,Partial<CharacterAttributes>>={
   Priest:{wisdom:6,constitution:2,charisma:3},Mage:{strength:-4,wisdom:3,constitution:-3,intelligence:7},Archtypical:{},
 };
 
-export function characterAttributes(race:PlayerRace,playerClass:PlayerClass):CharacterAttributes{
+export function characterAttributes(race:PlayerRace,playerClass:PlayerClass,training:Partial<CharacterAttributes>={}):CharacterAttributes{
   const result=Object.fromEntries(ATTRIBUTE_NAMES.map(name=>[name,35])) as CharacterAttributes;
   for(const modifiers of [RACE_MODIFIERS[race],CLASS_MODIFIERS[playerClass]])for(const [name,value] of Object.entries(modifiers))result[name as AttributeName]+=value!;
+  for(const [name,value] of Object.entries(training))result[name as AttributeName]+=value??0;
   return result;
 }
 
-export function characterStats(race:PlayerRace,playerClass:PlayerClass,level=1):CharacterStats{
-  const a=characterAttributes(race,playerClass),classArmor=playerClass==="Warrior"?2:playerClass==="Scholar"?1:0;
+export function characterStats(race:PlayerRace,playerClass:PlayerClass,level=1,training:Partial<CharacterAttributes>={}):CharacterStats{
+  const a=characterAttributes(race,playerClass,training),classArmor=playerClass==="Warrior"?2:playerClass==="Scholar"?1:0;
   return {
     maxHealth:45+a.constitution*2+(level-1)*8,
     maxEndurance:55+a.constitution+a.dexterity,
     maxMana:10+Math.round((a.intelligence+a.constitution)*.8)+(level-1)*4,
-    baseDamage:Math.max(2,Math.floor(a.strength/8))+Math.floor((level-1)/2),
+    baseDamage:Math.max(2,Math.floor((a.strength-20)/5))+Math.floor((level-1)/2),
     armor:classArmor,
     carryCapacity:a.strength*2+a.constitution,
     attackInterval:Math.max(.58,Math.min(1.35,1.15-(a.dexterity+a.constitution-70)*.008)),
@@ -57,19 +60,19 @@ export function characterStats(race:PlayerRace,playerClass:PlayerClass,level=1):
 
 const SKILL_BASE:Record<PlayerClass,readonly number[]>={Warrior:[18,12,9,15,9,2],Scholar:[6,15,6,10,11,12],Gypsy:[10,10,12,6,16,6],Priest:[10,8,5,10,8,14],Mage:[4,6,3,8,9,17],Archtypical:[9,8,7,7,7,7]};
 const SKILL_DEFINITIONS:readonly [string,AttributeName][]=[["Melee weaponry","strength"],["Empty hand combat","dexterity"],["Bowman","perception"],["Armor usage","constitution"],["Defensive dodge","dexterity"],["Magical defense","wisdom"]];
-export function characterSkills(race:PlayerRace,playerClass:PlayerClass):CharacterSkill[]{const a=characterAttributes(race,playerClass);return SKILL_DEFINITIONS.map(([name,prime],index)=>{const raw=SKILL_BASE[playerClass][index];return {name,raw,prime,adjusted:Math.round(raw*(.75+a[prime]/100))};});}
+export function characterSkills(race:PlayerRace,playerClass:PlayerClass,attributeTraining:Partial<CharacterAttributes>={},skillTraining:Readonly<Record<string,number>>={}):CharacterSkill[]{const a=characterAttributes(race,playerClass,attributeTraining);return SKILL_DEFINITIONS.map(([name,prime],index)=>{const raw=SKILL_BASE[playerClass][index]+(skillTraining[name]??0);return {name,raw,prime,adjusted:Math.round(raw*(.75+a[prime]/100))};});}
 
 export function experienceForNextLevel(level:number):number{return level*100;}
-export function gainExperience(current:Progression,amount:number):{progression:Progression;levelsGained:number}{
-  let level=current.level,experience=current.experience+Math.max(0,amount),levelsGained=0,next=experienceForNextLevel(level);
-  while(experience>=next){experience-=next;level+=1;levelsGained+=1;next=experienceForNextLevel(level);}
-  return {progression:{level,experience,nextLevelExperience:next},levelsGained};
-}
+export function gainExperience(current:Progression,amount:number):Progression{return {...current,experience:current.experience+Math.max(0,amount)};}
+export function canPromote(current:Progression):boolean{return current.experience>=current.nextLevelExperience;}
+export function promote(current:Progression,random=Math.random):{progression:Progression;developmentPoints:number;attributePoints:number}{if(!canPromote(current))throw new Error("not enough experience");let developmentPoints=50;for(let i=0;i<current.level;i++)developmentPoints+=1+Math.floor(random()*10);const level=current.level+1;return {progression:{level,experience:current.experience-current.nextLevelExperience,nextLevelExperience:experienceForNextLevel(level)},developmentPoints,attributePoints:2};}
+export function skillTrainingCost(playerClass:PlayerClass,skillName:string,currentRaw:number):number{const index=SKILL_DEFINITIONS.findIndex(([name])=>name===skillName);if(index<0)return Number.POSITIVE_INFINITY;const affinity=playerClass==="Warrior"&&index===0?3:Math.max(2,Math.ceil((24-SKILL_BASE[playerClass][index])/6));return affinity+Math.floor(currentRaw/25);}
+export function restRecovery(current:number,max:number,seconds:number,constitution:number):number{return Math.min(max,current+seconds*Math.max(1,constitution/18));}
 
 export function attackDamage(stats:CharacterStats,weapon?:Equipment):number{return stats.baseDamage+(weapon?.damage??0);}
 export interface MeleeAttack {hit:boolean;roll:number;chance:number;damage:number}
-export function resolveMeleeAttack(race:PlayerRace,playerClass:PlayerClass,level:number,weapon:Equipment|undefined,targetArmor:number,carriedWeight:number,random=Math.random):MeleeAttack{
-  const stats=characterStats(race,playerClass,level),skill=characterSkills(race,playerClass)[weapon?0:1].adjusted,requirement=weapon?.requirement??0;
+export function resolveMeleeAttack(race:PlayerRace,playerClass:PlayerClass,level:number,weapon:Equipment|undefined,targetArmor:number,carriedWeight:number,random=Math.random,attributeTraining:Partial<CharacterAttributes>={},skillTraining:Readonly<Record<string,number>>={}):MeleeAttack{
+  const stats=characterStats(race,playerClass,level,attributeTraining),skill=characterSkills(race,playerClass,attributeTraining,skillTraining)[weapon?0:1].adjusted,requirement=weapon?.requirement??0;
   // DLL shape: d100 to-hit adjusted by proficiency-vs-requirement, target AC,
   // attack bonuses and one-third of over-encumbrance. Weapon fields remain unresolved.
   const over=Math.max(0,carriedWeight-stats.carryCapacity),chance=Math.max(8,Math.min(95,55+skill-requirement-targetArmor*3-Math.floor(over/3))),roll=1+Math.floor(random()*100);
@@ -77,8 +80,9 @@ export function resolveMeleeAttack(race:PlayerRace,playerClass:PlayerClass,level
   const minimum=weapon?.damageMin??Math.max(1,Math.floor(stats.baseDamage/2)),maximum=weapon?.damage??stats.baseDamage,rolled=minimum+Math.floor(random()*(maximum-minimum+1));
   return {hit:true,roll,chance,damage:rolled+Math.max(0,Math.floor((stats.baseDamage-2)/2))};
 }
-export function receivedDamage(rawDamage:number,stats:CharacterStats,armor?:Equipment):number{return Math.max(1,rawDamage-stats.armor-(armor?.armor??0));}
-export function effectiveArmor(stats:CharacterStats,armor?:Equipment):number{return stats.armor+(armor?.armor??0);}
+export function receivedDamage(rawDamage:number,stats:CharacterStats,armor?:Equipment|number):number{return Math.max(1,rawDamage-stats.armor-(typeof armor==="number"?armor:armor?.armor??0));}
+export function effectiveArmor(stats:CharacterStats,armor?:Equipment|number):number{return stats.armor+(typeof armor==="number"?armor:armor?.armor??0);}
+export function equipmentArmor(ids:Iterable<EquipmentId>):number{return [...ids].reduce((total,id)=>total+(EQUIPMENT[id].armor??0),0);}
 export function updateEndurance(current:number,max:number,seconds:number,running:boolean,moving:boolean):number{return Math.max(0,Math.min(max,current+seconds*(running?-18:moving?5:11)));}
 export function inventoryWeight(items:Iterable<EquipmentId>):number{return [...items].reduce((total,id)=>total+EQUIPMENT[id].weight,0);}
 export function equip(loadout:Loadout,item:Equipment):Loadout{return {...loadout,[item.slot]:item.id};}
