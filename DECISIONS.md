@@ -132,3 +132,10 @@ Spell records are exported from `RCI_SPEL.db` through a tracked immutable/read-o
 - Status: Accepted
 
 Experience is banked until the player issues `PROMOTE` in a source-marked promotion room. Promotion follows recovered point grants: `50 + current-level d10 rolls` development points and 2 attribute points, capped at 10 unspent attribute points. The Pendlehaven fixture has a promotion-capable guild and a guild trainer but no separately decoded attribute-training room, so Oscar provisionally provides both proficiency and attribute training. Training proximity is required. Silver costs, exact per-walk cost tables, and full promotion HP/mana/race branches remain deferred and explicitly labeled.
+
+## D-019 — Separate defeated bodies, ground loot, and respawning
+
+- Date: 2026-08-07
+- Status: Accepted
+
+A defeated mob is removed from the active scene and interaction list immediately. Its prototype reward becomes a persistent, separately collectible ground item rather than entering the player's inventory automatically. World mobs are suppressed at their original spawn room for a provisional two-minute cooldown and can return only during a later room build; arena opponents remain gong-summoned. Automatic aggression follows the recovered NPC behavior byte: value 1 attacks any player, value 2 is criminals-only, and other values are passive unless separately decoded. The cooldown and reward mappings remain prototype rules pending exact source decoding.

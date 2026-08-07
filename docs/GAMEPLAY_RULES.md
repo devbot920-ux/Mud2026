@@ -23,6 +23,8 @@ The fixed-width spell table and DLL casting consumers now establish exact mana c
 
 Promotion is explicit rather than automatic. Recovered help says experience is traded for advancement and attribute points are awarded on promotion. `_PROMOTE` grants `50 + current-level d10 rolls` development points and 2 attribute points; the fixture identifies Pendlehaven Guild as a promotion room capped at level 5. Training help confirms trainer locations, development-point and silver costs, rising costs at higher skill, walk-specific efficiency, and the exact example of 3 development points for a Warrior's starting Melee Weaponry increase.
 
+`_NPC_MAINTAIN` decodes NPC behavior value 1 as scanning for and engaging any player in the room, and value 2 as engaging criminals only. The four currently modeled hostile types all carry value 1. The same maintenance path tracks an acquired target.
+
 ## Prototype rules currently implemented
 
 `prototypes/web/src/rpg.ts` provides deterministic, tested working values:
@@ -38,6 +40,7 @@ Promotion is explicit rather than automatic. Recovered help says experience is t
 - Strength now directly determines the physical-damage base; trained prime attributes also change adjusted proficiency and therefore melee accuracy.
 - The equipment sheet exposes the 12 decoded wearable locations plus the separately armed weapon: torso, arms, legs, feet, head, shield, cloak, two ring locations, necklace, bracers, and amulet.
 - `REST` enters the recovered resting state and restores health, movement, and mana while stationary and out of combat. Its tick rates remain prototype balancing.
+- A killed mob disappears immediately and its deterministic prototype equipment reward remains on the ground until taken. World replacements use a provisional two-minute delay and appear only on a later room load; the exact original corpse, drop-table, and respawn rules remain undecoded.
 
 These numeric modifiers, formulas, starter proficiency values, loot weights, and loot bonuses are presentation/gameplay decisions, not decoded original constants. The Character menu says this in-game.
 
@@ -51,11 +54,12 @@ These numeric modifiers, formulas, starter proficiency values, loot weights, and
 - `ARM <item>` and `EQUIP <item>` equip owned gear. `DISARM`, `UNEQUIP`, and `REMOVE` clear a slot.
 - `Enter` changes from mouse-look to command entry. The control-mode button or clicking the world returns to mouse-look.
 - Proximity buttons expose nearby inspection, combat, spell, and exit actions. Engaged mobs chase, can block close exits, and may follow across ordinary fixture edges; sprint across an exit or use `FLEE <direction>` to break through.
+- Giant slugs, kobolds, kobold thugs, and kobold guards automatically engage after a short room-entry grace period. Ground rewards can be collected with `E`, a proximity button, `GET <item>`, or `TAKE <item>`.
 
 ## Evidence
 
 - `C:\dos\modules\RCI_HEL1.db`, `data_t`: topics 36–38, 42–74, 81–86, and 119–124. Aliases are exposed through converted keys; long help text is decoded as CP437 provisionally.
-- `C:\temp\decompileproject\decomp2\RCIROSE.DLL.c`: inventory consumers plus `_PROMOTE`, `_RESTME`, `_BREAK_REST`, `_IS_EQUIPPED_AT`, `_PCWEAR`, casting consumers, and combat consumers.
+- `C:\temp\decompileproject\decomp2\RCIROSE.DLL.c`: inventory consumers plus `_PROMOTE`, `_RESTME`, `_BREAK_REST`, `_IS_EQUIPPED_AT`, `_PCWEAR`, `_NPC_MAINTAIN`, `_SCAN_ENGAGE`, `_SCAN_ENGAGE_CRIMINALS`, `_TRACK`, casting consumers, and combat consumers.
 - `C:\dos\modules\RCI_SPEL.db`, `data_t`: 97 immutable/read-only 405-byte spell records exported privately by `scripts/export_spell_fixture.py`.
 - `scripts/baseline_import.py`: the eight-attribute and known-skill identifier maps used by the provenance baseline.
 

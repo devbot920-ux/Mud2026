@@ -72,6 +72,9 @@ The complete future tracker will be GitHub Issues. This file keeps the immediate
 - [x] Grant development/attribute points on promotion and require proximity to Oscar to spend them
 - [x] Map all 12 source wearable-location codes, render every slot, and add the fixture's animal-hide boots
 - [x] Add interruptible out-of-combat REST recovery
+- [x] Remove defeated mobs immediately and leave separately collectible, room-persistent ground loot
+- [x] Apply decoded NPC behavior-1 automatic aggression to the current slug and kobold variants
+- [ ] Decode exact corpse lifetime, respawn timing, and source drop-table fields to replace prototype encounter rewards
 - [ ] Decode item weight, equipment-location, proficiency requirement, and restriction fields to replace prototype values
 - [ ] Add shops, currency, buying/selling, and source-backed encumbrance penalties
 - [ ] Decode exact walk/proficiency training tables and add the recovered silver cost after currency exists

@@ -210,3 +210,9 @@ Armor modifier `0x0034` stores its wearable-location byte at raw record offset 7
 | 12 | Amulet | 9 | amulet of the elders |
 
 The left/right ring labels are a client presentation choice; the source confirms two distinct ring locations but not handedness in the inspected text. Weapon arming remains separate from the 12 wearable locations.
+
+## NPC automatic-engagement behavior
+
+NPC base modifier `0x0028` stores a behavior byte at raw record offset 26 (modifier-body offset `0x16`). The decompiled `_NPC_MAINTAIN` consumer gives this field strong semantics: value `1` calls `_SCAN_ENGAGE` for any player in the room, value `2` calls `_SCAN_ENGAGE_CRIMINALS`, and other observed values do not enter either automatic scan branch. `_NPC_MAINTAIN` subsequently calls `_TRACK` for an acquired target, corroborating room pursuit.
+
+The source records for the currently modeled giant slug (4003), kobold (129), kobold thug (4004), and kobold guard (4006) all contain behavior value `1`. They therefore auto-engage any player in the web prototype. Exact scan cadence, respawn delay, and original drop-table fields are not yet decoded.

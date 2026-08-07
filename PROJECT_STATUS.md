@@ -191,6 +191,15 @@ Phase 6 character-progression verification completed on 2026-08-07:
 - Three.js Vitest suite — 87/87 tests passed across 11 files
 - TypeScript check — passed
 
+Phase 6 encounter-lifecycle verification completed on 2026-08-07:
+
+- Read-only DLL and NPC-record inspection recovered behavior 1 as scan/engage-any-player, behavior 2 as criminals-only, and target tracking after engagement
+- Giant slug 4003, kobold 129, kobold thug 4004, and kobold guard 4006 all carry behavior 1 and now auto-engage after a short entry grace period
+- Defeated models and interactions are removed immediately; prototype equipment rewards become persistent ground objects with mouse/proximity/command pickup
+- World respawning is keyed to the original spawn room, uses a provisional two-minute cooldown, and occurs only on a subsequent room build
+- Three.js Vitest suite — 91/91 tests passed across 12 files
+- TypeScript check and Vite production build — passed
+
 ## Unresolved questions
 
 - What are the exact byte-field layouts within the newly classified MOD1 tag families?
@@ -202,4 +211,4 @@ Phase 6 character-progression verification completed on 2026-08-07:
 
 ## Exact next task
 
-Hands-on earn at least 100 XP, visit room 4170, PROMOTE, approach Oscar, spend both point types, equip the wardroom boots, inspect all equipment slots, and verify REST interruption. Next decode item damage/requirement fields, exact training tables, and additional spell handlers, then implement shops/currency and private save-state persistence.
+Hands-on enter each current hostile room, verify automatic pursuit, kill one mob, confirm its model cannot be attacked again, leave its reward on the floor across a room round-trip, then collect it by both proximity and command in separate runs. Next decode exact corpse/respawn/drop fields, item damage/requirements, training tables, and additional spell handlers, then implement shops/currency and private save-state persistence.
